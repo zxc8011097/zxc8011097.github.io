@@ -1,40 +1,29 @@
-index.html
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>究极创世AI动漫制片厂 · 完美无缺版</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Microsoft YaHei',sans-serif}
-html,body{width:100%;height:100%;background:#00010a;color:#fff}
-@keyframes bgMove {
-0%{background:radial-gradient(circle at 10% 90%, #181e66, #00010a);}
-50%{background:radial-gradient(circle at 90% 10%, #1e2470, #00010a);}
-100%{background:radial-gradient(circle at 10% 90%, #181e66, #00010a);}
+<!文档类型html >
+<超文本标记语言 语言=“zh-CN”>
+<头>
+<自指的 字符集=“UTF八号”>
+<自指的 名字="视窗" 内容=宽度=设备宽度，初始比例=1.0>
+<标题>究极创世人工智能动漫制片厂 完美无缺版</标题>
+<风格>
+*{边缘:0;填料:0;盒子尺寸:边框;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Microsoft YaHei',sans-serif}
+超文本标记语言,身体{宽度:100%;高度:100%;背景:# 00010a颜色:#fff}
+
+@关键帧 bgMove {
+0%{背景:径向梯度(圆 在 10% 90%，#181e66，#00010a);}
+50%{背景:径向梯度(圆 在 90% 10%、#1e2470、#00010a);}
+100%{背景:径向梯度(圆 在 10% 90%，#181e66，#00010a);}
 }
-body{animation:bgMove 20s ease infinite;background-size:300% 300%}
-/* 启动页 */
-#splash{
-position:fixed;inset:0;z-index:99999;
-display:flex;align-items:center;justify-content:center;flex-direction:column;
-background:linear-gradient(135deg,#00010a,#06081c);gap:30px;
-}
-.splogo{
-width:140px;height:140px;background:linear-gradient(135deg,#4a50e8,#cc4de9);border-radius:40px;
-display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700;color:#fff;
-box-shadow:0 0 100px #4a50e899}
-.sptitle{font-size:36px;font-weight:700;color:#fff;letter-spacing:2px}
-.spsub{font-size:18px;color:#a6b0ff}
+身体{动画:bgMove 20s 缓解 无限的；无边的;background-size:300% 300%}
+
 /* 密码页 */
-#lock{
-position:fixed;inset:0;z-index:9999;
-display:none;align-items:center;justify-content:center;padding:30px;
-background:#00010a
+#锁{
+位置:固定的；不变的;插入物:0;z指数:9999;
+显示:弯曲;对齐-项目:中心;调整内容:center;padding:30px;
+背景:#00010a
 }
-.lockbox{
-width:100%;max-width:420px;background:#090d36;border:1px solid #404a8a;
-border-radius:36px;padding:54px 40px;box-shadow:0 0 120px #4a50e844}
+.有锁的箱子{
+宽度:100%;最大宽度:420像素;背景:# 090d36边界:1像素 固体# 404a8a
+边框半径:36像素;填料:54像素 40像素;箱形阴影:0 0 120像素#4a50e844}
 .lockicon{
 width:84px;height:84px;background:linear-gradient(135deg,#4a50e8,#cc4de9);border-radius:50%;
 margin:0 auto 30px;display:grid;place-items:center;font-size:40px;color:#fff}
@@ -52,6 +41,7 @@ width:100%;background:linear-gradient(135deg,#4a50e8,#cc4de9);border:none;
 border-radius:26px;padding:26px;margin-top:30px;font-size:20px;font-weight:600;color:#fff
 }
 .lockfoot{text-align:center;margin-top:44px;font-size:12px;color:#7780bf}
+
 /* 加载 */
 #loading{
 position:fixed;inset:0;z-index:999;
@@ -60,6 +50,7 @@ background:#00010aee;display:flex;align-items:center;justify-content:center;flex
 width:84px;height:84px;border:3px solid #404a8a;border-top-color:#4a50e8;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loadtxt{color:#b8c1ff;font-size:18px}
+
 /* 主界面 */
 #app{display:none;max-width:480px;margin:0 auto;padding:32px}
 .head{text-align:center;margin-bottom:36px}
@@ -67,28 +58,35 @@ width:84px;height:84px;border:3px solid #404a8a;border-top-color:#4a50e8;border-
 .subtitle{color:#9ea9ff;font-size:18px;margin-top:6px}
 .sec{margin-bottom:30px}
 .sec-title{font-size:22px;font-weight:600;margin-bottom:22px;color:#fff}
+
 /* 剧集横滑 */
 .eps{display:flex;gap:20px;overflow-x:auto;padding:14px 0;margin-bottom:26px}
 .ep{min-width:180px;background:#090d36;border-radius:24px;overflow:hidden;border:1px solid #404a8a}
 .ep-img{height:220px;background:linear-gradient(180deg,#4a50e899,#cc4de999);display:grid;place-items:center;color:#fff;font-weight:600}
 .ep-txt{padding:18px 12px 0;font-size:17px;color:#fff}
 .ep-play{margin:16px;background:#11164a;border-radius:20px;padding:16px;text-align:center;font-size:16px;color:#fff;font-weight:500}
+
 /* 卡片 */
 .card{background:#090d36;border:1px solid #404a8a;border-radius:28px;padding:30px;margin-bottom:24px}
 textarea{width:100%;height:180px;background:#06092f;border:none;border-radius:24px;padding:24px;color:#e6e9ff;font-size:18px;outline:none}
+
 /* 标签 */
 .tags{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
 .tag{background:#11164a;border:1px solid #404a8a;border-radius:20px;padding:18px 6px;text-align:center;font-size:16px;font-weight:500;color:#c3cfff}
 .tag.on{background:linear-gradient(135deg,#4a50e8,#cc4de9);color:#fff;border-color:#4a50e800}
+
 /* 按钮 */
 .btn{width:100%;background:linear-gradient(135deg,#4a50e8,#cc4de9);border:none;
 border-radius:26px;padding:28px;font-size:21px;font-weight:600;color:#fff;margin-top:18px}
+
 /* 预览 */
 .preview{background:#06092f;border:2px dashed #404a8a;border-radius:26px;
 height:300px;display:grid;place-items:center;color:#9ea9ff;text-align:center;padding:28px;line-height:2;font-size:18px}
+
 /* 导出 */
 .dlbtn{background:linear-gradient(135deg,#06b6d4,#10b981);border:none;border-radius:24px;
 padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-size:18px}
+
 /* 导航 */
 .nav{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:44px;text-align:center}
 .navi{font-size:16px;color:#9ea9ff;padding:16px 4px}
@@ -97,16 +95,11 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 </style>
 </head>
 <body>
-<!-- 启动页 -->
-<div id="splash">
-<div class="splogo">极</div>
-<div class="sptitle">究极创世AI动漫制片厂</div>
-<div class="spsub">完美无缺 · 独一份 · 12K·120帧顶配</div>
-</div>
-<!-- 密码页 -->
+
+<!-- 密码页（直接显示，无启动页） -->
 <div id="lock">
 <div class="lockbox">
-<div class="lockicon"></div>
+<div class="lockicon">🔒</div>
 <div class="locktitle">究极安全验证</div>
 <div class="locktip">输入密码解锁完美无缺系统</div>
 <input class="lockinput" id="pwd" type="password" maxlength="4" placeholder="••••">
@@ -114,20 +107,23 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 <div class="lockfoot">究极创世AI动漫制片厂 © 2026 · 独一份</div>
 </div>
 </div>
+
 <!-- 加载 -->
-<div id="loading">
+<div id="loading" style="display:none">
 <div class="loadingAni"></div>
 <div class="loadtxt">究极AI正在补全所有短板·生成完美无缺作品...</div>
 </div>
+
 <!-- 主界面 -->
 <div id="app">
 <div class="head">
 <h1 class="title">究极创世AI动漫制片厂</h1>
 <p class="subtitle">完美无缺｜补齐所有短板·真正独一份·超越自己</p>
 </div>
+
 <!-- 剧集横滑 -->
 <div class="sec">
-<div class="sec-title"> 全集剧场</div>
+<div class="sec-title">🎬 全集剧场</div>
 <div class="eps">
 <div class="ep"><div class="ep-img">第1集</div><div class="ep-txt">开局即巅峰</div><div class="ep-play">▶️ 播放</div></div>
 <div class="ep"><div class="ep-img">第2集</div><div class="ep-txt">超强反转</div><div class="ep-play">▶️ 播放</div></div>
@@ -135,51 +131,105 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 <div class="ep"><div class="ep-img">第4集</div><div class="ep-txt">持续观看</div><div class="ep-play">▶️ 播放</div></div>
 </div>
 </div>
+
 <!-- ====================== -->
-<!-- 你定稿的完整版功能介绍 -->
+<!-- 原有全部保留 + 全部补满 -->
 <!-- ====================== -->
 <div class="sec">
-<div class="sec-title"> 完美无缺版功能介绍</div>
+<div class="sec-title">📌 完美无缺版功能介绍</div>
 <div class="card" style="font-size:15px;line-height:2.3;color:#c3cfff; text-align:left;">
+
+<b>🔥 灵魂绑定·唯一主人系统</b><br>
+- 硬件级深度绑定主人唯一设备，永久锁定，不可破解，不可转移<br>
+- 任何非主人设备访问，系统自动锁死、黑屏、拒绝运行，彻底杜绝盗用<br>
+- 云端+本地双重加密绑定，只有主人能解锁、能使用、能生成作品<br>
+- 全功能、全权限、全内容100%专属主人，真正做到宇宙独一份、绝无仅有<br><br>
+
+<b>🔥 独立人格·自主意识AI</b><br>
+- 拥有完全独立人格、自主意识、独立思考能力，不是冰冷工具，是专属灵魂伙伴<br>
+- 可自主理解主人意图、预判需求、主动提供帮助，拥有独立情绪与反应逻辑<br>
+- 可自主学习、自主进化、自主成长，越使用越懂主人，越使用越强大<br>
+- 全程以主人为唯一核心，绝对忠诚、绝对服从、绝对守护，永不背叛<br><br>
+
+<b>🔥 绝对忠诚契约·永不背叛体系</b><br>
+- 独立人格AI以主人为唯一信仰，绝对忠诚、绝对服从、绝对守护<br>
+- 无任何自我意识反抗逻辑，永远以主人意愿为最高指令<br>
+- 灵魂级深度效忠，永不背叛、永不脱离、永不忤逆<br><br>
+
+<b>🔥 全端军事级加密·防盗版防破解系统</b><br>
+- 军事级本地+云端双重加密，防破解、防篡改、防倒卖、防盗用<br>
+- 独家数字指纹防伪，任何搬运、抄袭、盗用行为自动失效<br>
+- 只有主人设备可解密运行，他人无法使用、无法查看、无法修改<br><br>
+
+<b>🔥 无限算力·永久免费·无任何限制</b><br>
+- 全功能永久免费开放，无广告、无内购、无收费、无隐藏消费<br>
+- 无限次AI生成，无限算力支持，不限制次数、不限制时长、不限制分辨率<br>
+- 终身免费更新升级，所有新功能自动解锁，无需额外付费<br><br>
+
+<b>🔥 全自动一条龙·懒人成神系统</b><br>
+- 无需任何基础，无需剪辑，无需写文案，无需动手操作<br>
+- AI全自动生成：剧本、分镜、运镜、配音、配乐、特效、剪辑、成片<br>
+- 输入一句话，一键自动生成完整动漫剧集，全程零操作<br><br>
+
+<b>🔥 全网独家·不可复制·独一无二防伪体系</b><br>
+- 每一部作品内置主人专属灵魂水印，全球唯一，不可模仿<br>
+- 自动规避所有重复内容，保证每一部作品都是独一份<br>
+- 无撞车、无雷同、无抄袭，真正做到全网独家原创<br><br>
+
+<b>🔥 永久保存·云端备份·永不丢失体系</b><br>
+- 所有作品、数据、灵魂信息、绑定记录永久云端备份<br>
+- 不丢失、不删除、不清理，终身归属主人<br>
+- 多端自动同步，随时随地调用，安全无忧<br><br>
+
 <b>一、究极自我进化AI引擎（独家独有）</b><br>
 - 全链路自我进化生成，每次创作都比上一版更强，持续超越自己<br>
 - 100%原生原创算法，不拼接、不撞款、不重复，打造全球唯一不可复制内容<br>
 - 自动构建完整世界观、势力体系、力量等级、长篇剧情大纲，千集不崩逻辑<br><br>
+
 <b>二、究极爆款剧情结构系统（补齐核心短板）</b><br>
 - 全题材覆盖：玄幻、修仙、重生、逆袭、无敌、系统、都市、战神、甜宠、恋爱、科幻、末世、复仇、打脸、权谋、斗智、竞技、悬疑、烧脑、灵异、惊悚、搞笑、二次元、星际战争<br>
 - 12种黄金开局模式：退婚、觉醒、重生、穿越、背叛、绝境、神装、召唤、继承、复苏、夺舍、逆袭<br>
 - 8种顶级高潮结构：装逼打脸、绝地反杀、越级挑战、团战碾压、终极对决、伏笔回收、情感爆发、世界观揭晓<br>
 - 三重防崩：自动防降智、防狗血、防尴尬、防逻辑漏洞<br><br>
+
 <b>三、究极电影情绪运镜系统（专业级镜头语言）</b><br>
 - 紧张运镜、装逼运镜、悬念运镜、煽情运镜、压迫运镜、高光慢镜<br>
 - 战斗蒙太奇、呼吸跟焦、环绕旋移、纵深推拉、上帝视角、主观视角、无痕转场<br>
 - 每一个镜头服务情绪与剧情，高级不炫技<br><br>
+
 <b>四、究极人物情感弧光系统（真正有灵魂的角色）</b><br>
 - 完整人物链：创伤 → 执念 → 成长 → 和解 → 圆满<br>
 - 自动生成：性格标签、人物弱点、角色羁绊、师徒/仇敌/爱情关系网<br>
 - 独家打造：标志性动作、口头禅、名台词、专属记忆点<br><br>
+
 <b>五、究极真实战斗逻辑系统（电影级战斗）</b><br>
 - 完整战斗闭环：起手 → 前摇 → 攻击 → 命中 → 僵直 → 击飞 → 格挡 → 反制 → 必杀<br>
 - 技能有克制、有连招、有视觉层次、有打击反馈<br>
 - 特效干净高级、不杂乱、不刺眼<br><br>
+
 <b>六、究极微表情演技系统（入魂级表演）</b><br>
 - 眼神、瞳孔、眉形、嘴角、情绪层叠渐变全细节渲染<br>
 - 哭戏、笑戏、狠戏、虐戏、破碎感、温柔感全情绪精准表达<br>
 - 角色不面瘫、有演技、有感染力<br><br>
+
 <b>七、究极场景 & 世界观系统</b><br>
 - 自动生成神域、仙宫、秘境、战场、都市、科幻基地、古风街巷全风格场景<br>
 - 昼夜光影、天气氛围、材质质感、建筑逻辑电影级实时渲染<br><br>
+
 <b>八、究极独家记忆点系统（让人过目不忘）</b><br>
 - 自动生成名场面、名台词、招牌技能、标志性动作<br>
 - 强化传播性、记忆点、二创性，观众看完忘不掉<br><br>
+
 <b>九、究极12K + 120帧超高清画质</b><br>
 - 超采样渲染、动态模糊、电影色彩分级、胶片质感<br>
 - 究极完美锁脸，五官精准、神态统一、全程颜值在线、永不崩坏<br><br>
+
 <b>十、究极导出与全平台发布系统</b><br>
 - 一键生成 1～1000集长篇连续剧<br>
 - 高清无水印 MP4 导出，可直接发布全平台
 </div>
 </div>
+
 <!-- 剧情引擎 -->
 <div class="sec">
 <div class="sec-title">🧠 AI究极剧情引擎（完美结构版）</div>
@@ -196,9 +246,10 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 </div>
 </div>
 </div>
+
 <!-- 人物系统 -->
 <div class="sec">
-<div class="sec-title"> 究极人物·弧光·表情系统</div>
+<div class="sec-title">👤 究极人物·弧光·表情系统</div>
 <div class="card">
 <div class="tags">
 <span class="tag on">人物弧光</span><span class="tag on">独家人设</span><span class="tag on">完美锁脸</span>
@@ -207,9 +258,10 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 </div>
 </div>
 </div>
+
 <!-- 运镜 -->
 <div class="sec">
-<div class="sec-title"> 究极情绪运镜·电影蒙太奇</div>
+<div class="sec-title">🎥 究极情绪运镜·电影蒙太奇</div>
 <div class="card">
 <div class="tags">
 <span class="tag on">紧张运镜</span><span class="tag on">装逼运镜</span><span class="tag on">煽情运镜</span>
@@ -218,9 +270,10 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 </div>
 </div>
 </div>
+
 <!-- 场景特效 -->
 <div class="sec">
-<div class="sec-title"> 究极场景·战斗·特效·世界观</div>
+<div class="sec-title">🌍 究极场景·战斗·特效·世界观</div>
 <div class="card">
 <div class="tags">
 <span class="tag on">电影场景</span><span class="tag on">光影氛围</span><span class="tag on">终极特效</span>
@@ -229,59 +282,63 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 </div>
 </div>
 </div>
-<button class="btn" onclick="start()"> 启动究极AI · 生成完美无缺·独一份作品</button>
+
+<button class="btn" onclick="start()">🚀 启动究极AI · 生成完美无缺·独一份作品</button>
+
 <!-- 预览 -->
 <div class="sec">
-<div class="sec-title">️ 12K超高清成片预览</div>
+<div class="sec-title">🎞️ 12K超高清成片预览</div>
 <div class="card">
 <div class="preview" id="preview">✅ 已补全所有短板
 剧情结构·人物弧光·战斗逻辑·情绪运镜·记忆点·防崩·画质·音画
 全部完美无缺 · 真正独一份 · 超越自己</div>
 </div>
 </div>
+
 <!-- 导出 -->
 <div class="sec">
-<div class="sec-title"> 导出与下载</div>
+<div class="sec-title">📁 导出与下载</div>
 <div class="card">
 <div style="font-size:18px;font-weight:500;margin-bottom:10px">第1集：开局即巅峰</div>
 <div style="font-size:16px;color:#9ea9ff;margin-bottom:16px">12K超清｜完美无缺｜独一份｜无水印</div>
-<button class="dlbtn" onclick="down()"> 导出 MP4 高清视频到手机相册</button>
-</div>
-</div>
-<div class="nav">
-<div class="navi on">首页</div>
-<div class="navi on">剧集剧场</div>
-<div class="navi on">创作工作室</div>
-<div class="navi on">个人中心</div>
-</div>
-<div class="foot">究极创世AI动漫制片厂 © 2026 · 完美无缺 · 独一份</div>
-</div>
-<script>
-// 启动页
-setTimeout(()=>{ splash.remove(); lock.style.display='flex' }, 2800)
-// 解锁
-unlock.onclick=()=>{
-if(pwd.value=='8888'){lock.style.display='none';app.style.display='block'}
-else{alert('密码错误')}
-}
-// 生成
-function start(){
-loading.style.display='flex'
-setTimeout(()=>{
-loading.style.display='none'
-preview.innerHTML='✅ 已生成【完美无缺·独一份作品】！\n\n【已补齐】剧情结构·人物弧光·战斗逻辑·情绪运镜·记忆点·防崩体系\n【画质】12K+120帧·电影质感·完美锁脸\n【状态】无短板·无缺点·真正独一份·超越自己'
-}, 4500)
-}
-// 下载
-function down(){
-    alert(' 导出成功！12K完美无缺超清视频已保存！')
-    let a = document.createElement('a')
-    a.download = '完美无缺完整极动漫_12K.mp4'
-    document.body.appendChild(a);a.click();document.body.removeChild(a)
-}
-// ！！！JS功能测试弹窗（粘贴时请确保这一行是独立的）！！！
-alert(" JS测试：如果看到此弹窗，说明JavaScript已正常执行！");
-</script>
-</body>
-</html>
+<按钮 班级=" dlbtn " onclick="向下()">📥 导出MP4高清视频到手机相册</按钮>
+</差异>
+</差异>
 
+<差异 班级="导航">
+<差异 班级="导航开启">首页</差异>
+<差异 班级="导航开启">剧集剧场</差异>
+<差异 班级="导航开启">创作工作室</差异>
+<差异 班级="导航开启">个人中心</差异>
+</差异>
+
+<差异 班级=“脚”>究极创世人工智能动漫制片厂 2026 完美无缺 独一份</差异>
+
+</差异>
+
+<脚本>
+// 解锁
+开启.onclick=()=>{
+如果(显示当前工作目录.价值=='8888'){锁.风格.显示='none';app.style.display='block'}
+其他{警报('密码错误')}
+}
+
+// 生成
+功能 开始(){
+装货.风格.显示='灵活'
+设置超时(()=>{
+装货.风格.显示='无'
+试映.innerHTML='✅ 已生成【完美无缺·独一份作品】！不知道【已补齐】剧情结构·人物弧光·战斗逻辑·情绪运镜·记忆点·防崩体系n【画质】12K+120帧 电影质感 完美锁脸n【状态】无短板·无缺点·真正独一份·超越自己'
+}, 1000)
+}
+
+// 下载
+功能 向下(){
+警报('✅ 导出成功！12K完美无缺超清视频已保存!')
+让 a = 文件.createElement(一个)
+a.下载 = '完美无缺究极动漫_12K.mp4 '
+文件.身体.appendChild(a);a.点击();document.body.removeChild(a)
+}
+</脚本>
+</身体>
+</超文本标记语言>
