@@ -1,29 +1,29 @@
-<!文档类型html >
-<超文本标记语言 语言=“zh-CN”>
-<头>
-<自指的 字符集=“UTF八号”>
-<自指的 名字="视窗" 内容=宽度=设备宽度，初始比例=1.0>
-<标题>究极创世人工智能动漫制片厂 完美无缺版</标题>
-<风格>
-*{边缘:0;填料:0;盒子尺寸:边框;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Microsoft YaHei',sans-serif}
-超文本标记语言,身体{宽度:100%;高度:100%;背景:# 00010a颜色:#fff}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>究极创世AI动漫制片厂 · 完美无缺版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Microsoft YaHei',sans-serif}
+html,body{width:100%;height:100%;background:#00010a;color:#fff}
 
-@关键帧 bgMove {
-0%{背景:径向梯度(圆 在 10% 90%，#181e66，#00010a);}
-50%{背景:径向梯度(圆 在 90% 10%、#1e2470、#00010a);}
-100%{背景:径向梯度(圆 在 10% 90%，#181e66，#00010a);}
+@keyframes bgMove {
+0%{background:radial-gradient(circle at 10% 90%, #181e66, #00010a);}
+50%{background:radial-gradient(circle at 90% 10%, #1e2470, #00010a);}
+100%{background:radial-gradient(circle at 10% 90%, #181e66, #00010a);}
 }
-身体{动画:bgMove 20s 缓解 无限的；无边的;background-size:300% 300%}
+body{animation:bgMove 20s ease infinite;background-size:300% 300%}
 
 /* 密码页 */
-#锁{
-位置:固定的；不变的;插入物:0;z指数:9999;
-显示:弯曲;对齐-项目:中心;调整内容:center;padding:30px;
-背景:#00010a
+#lock{
+position:fixed;inset:0;z-index:9999;
+display:flex;align-items:center;justify-content:center;padding:30px;
+background:#00010a
 }
-.有锁的箱子{
-宽度:100%;最大宽度:420像素;背景:# 090d36边界:1像素 固体# 404a8a
-边框半径:36像素;填料:54像素 40像素;箱形阴影:0 0 120像素#4a50e844}
+.lockbox{
+width:100%;max-width:420px;background:#090d36;border:1px solid #404a8a;
+border-radius:36px;padding:54px 40px;box-shadow:0 0 120px #4a50e844}
 .lockicon{
 width:84px;height:84px;background:linear-gradient(135deg,#4a50e8,#cc4de9);border-radius:50%;
 margin:0 auto 30px;display:grid;place-items:center;font-size:40px;color:#fff}
@@ -301,44 +301,44 @@ padding:22px;text-align:center;font-weight:600;color:#fff;margin-top:22px;font-s
 <div class="card">
 <div style="font-size:18px;font-weight:500;margin-bottom:10px">第1集：开局即巅峰</div>
 <div style="font-size:16px;color:#9ea9ff;margin-bottom:16px">12K超清｜完美无缺｜独一份｜无水印</div>
-<按钮 班级=" dlbtn " onclick="向下()">📥 导出MP4高清视频到手机相册</按钮>
-</差异>
-</差异>
+<button class="dlbtn" onclick="down()">📥 导出 MP4 高清视频到手机相册</button>
+</div>
+</div>
 
-<差异 班级="导航">
-<差异 班级="导航开启">首页</差异>
-<差异 班级="导航开启">剧集剧场</差异>
-<差异 班级="导航开启">创作工作室</差异>
-<差异 班级="导航开启">个人中心</差异>
-</差异>
+<div class="nav">
+<div class="navi on">首页</div>
+<div class="navi on">剧集剧场</div>
+<div class="navi on">创作工作室</div>
+<div class="navi on">个人中心</div>
+</div>
 
-<差异 班级=“脚”>究极创世人工智能动漫制片厂 2026 完美无缺 独一份</差异>
+<div class="foot">究极创世AI动漫制片厂 © 2026 · 完美无缺 · 独一份</div>
 
-</差异>
+</div>
 
-<脚本>
+<script>
 // 解锁
-开启.onclick=()=>{
-如果(显示当前工作目录.价值=='8888'){锁.风格.显示='none';app.style.display='block'}
-其他{警报('密码错误')}
+unlock.onclick=()=>{
+if(pwd.value=='8888'){lock.style.display='none';app.style.display='block'}
+else{alert('密码错误')}
 }
 
 // 生成
-功能 开始(){
-装货.风格.显示='灵活'
-设置超时(()=>{
-装货.风格.显示='无'
-试映.innerHTML='✅ 已生成【完美无缺·独一份作品】！不知道【已补齐】剧情结构·人物弧光·战斗逻辑·情绪运镜·记忆点·防崩体系n【画质】12K+120帧 电影质感 完美锁脸n【状态】无短板·无缺点·真正独一份·超越自己'
+function start(){
+loading.style.display='flex'
+setTimeout(()=>{
+loading.style.display='none'
+preview.innerHTML='✅ 已生成【完美无缺·独一份作品】！\n\n【已补齐】剧情结构·人物弧光·战斗逻辑·情绪运镜·记忆点·防崩体系\n【画质】12K+120帧·电影质感·完美锁脸\n【状态】无短板·无缺点·真正独一份·超越自己'
 }, 1000)
 }
 
 // 下载
-功能 向下(){
-警报('✅ 导出成功！12K完美无缺超清视频已保存!')
-让 a = 文件.createElement(一个)
-a.下载 = '完美无缺究极动漫_12K.mp4 '
-文件.身体.appendChild(a);a.点击();document.body.removeChild(a)
+function down(){
+alert('✅ 导出成功！12K完美无缺超清视频已保存！')
+let a = document.createElement('a')
+a.download = '完美无缺究极动漫_12K.mp4'
+document.body.appendChild(a);a.click();document.body.removeChild(a)
 }
-</脚本>
-</身体>
-</超文本标记语言>
+</script>
+</body>
+</html>
