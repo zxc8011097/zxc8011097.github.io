@@ -1,292 +1,1501 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>完美无缺 | 究极自我进化AI引擎</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>究极动漫制作系统 | 全自动AI动画生成引擎</title>
+    
+    <!-- 引入Anime.js动画库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <!-- 引入SortableJS用于拖拽 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    
     <style>
+        /* 全局重置和基础样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
+        :root {
+            --primary-color: #ff4081;
+            --secondary-color: #7c4dff;
+            --accent-color: #00e5ff;
+            --success-color: #00e676;
+            --warning-color: #ff9100;
+            --dark-color: #0a0a1a;
+            --light-color: #f8f9ff;
+            --panel-bg: rgba(20, 20, 40, 0.9);
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
         body {
-            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: #fff;
-            line-height: 1.6;
+            font-family: 'Arial Rounded MT Bold', 'Microsoft YaHei', sans-serif;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(124, 77, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 64, 129, 0.1) 0%, transparent 20%);
             min-height: 100vh;
-            padding: 20px;
         }
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* 霓虹灯光效 */
+        .neon-text {
+            text-shadow: 
+                0 0 5px var(--primary-color),
+                0 0 10px var(--primary-color),
+                0 0 20px var(--primary-color),
+                0 0 40px var(--secondary-color);
         }
         
-        .header {
-            text-align: center;
-            padding: 40px 0;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            margin-bottom: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* 星空背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
         }
         
-        .main-title {
-            font-size: 3em;
-            background: linear-gradient(90deg, #ff8a00, #e52e71);
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: var(--gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
         
-        .subtitle {
-            font-size: 1.2em;
-            color: #aaa;
-            margin-bottom: 30px;
+        .nav-links {
+            display: flex;
+            gap: 2rem;
         }
         
-        .theater-section {
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 40px;
+        .nav-links a {
+            color: var(--light-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            background: var(--gradient);
+            transform: translateY(-2px);
+        }
+        
+        /* 英雄区域 */
+        .hero {
+            padding: 15rem 2rem 8rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #ff4081, #7c4dff, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: colorShift 5s infinite alternate;
+        }
+        
+        @keyframes colorShift {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: var(--gradient);
+            color: white;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 64, 129, 0.5);
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 64, 129, 0.8);
+        }
+        
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 80px);
+            margin-top: 80px;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            width: 280px;
+            background: var(--panel-bg);
             backdrop-filter: blur(10px);
+            padding: 2rem 1rem;
+            border-right: 2px solid var(--primary-color);
+            overflow-y: auto;
+            position: fixed;
+            height: calc(100vh - 80px);
+            left: 0;
+            top: 80px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-section h3 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .sidebar-item {
+            padding: 0.8rem 1rem;
+            margin: 0.5rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .sidebar-item.active {
+            background: var(--gradient);
+            box-shadow: 0 0 15px rgba(255, 64, 129, 0.3);
+        }
+        
+        /* 主内容区 */
+        .content-area {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        
+        /* 功能区域 */
+        .features {
+            padding: 2rem 0;
         }
         
         .section-title {
-            font-size: 1.8em;
-            color: #ff8a00;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ff8a00;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            padding-bottom: 1rem;
         }
         
-        .episode-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: var(--gradient);
+            border-radius: 2px;
         }
         
-        .episode-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .episode-number {
-            font-size: 1.5em;
-            color: #e52e71;
-            margin-bottom: 10px;
-        }
-        
-        .episode-title {
-            font-size: 1.3em;
-            margin-bottom: 15px;
-        }
-        
-        .play-button {
-            display: inline-block;
-            background: linear-gradient(90deg, #ff8a00, #e52e71);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        .play-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(255, 138, 0, 0.4);
-        }
-        
-        .features-section {
-            background: rgba(0, 0, 0, 0.5);
+        /* 角色编辑器 */
+        .character-editor {
+            background: var(--panel-bg);
             border-radius: 15px;
-            padding: 30px;
-            backdrop-filter: blur(10px);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--secondary-color);
         }
         
-        .feature-title {
-            font-size: 2em;
-            color: #00d4ff;
-            margin-bottom: 25px;
+        .editor-panel {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            min-height: 500px;
+        }
+        
+        .editor-controls {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-group label {
+            display: block;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        select, input[type="text"], input[type="range"], textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+            border-color: white;
+        }
+        
+        .color-option.selected {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+        
+        .character-preview {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .character-display {
+            font-size: 15rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        /* 语音合成器 */
+        .voice-synthesizer {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--success-color);
+        }
+        
+        .voice-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .voice-preview {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 1.5rem;
             text-align: center;
         }
         
-        .feature-item {
-            background: rgba(255, 255, 255, 0.08);
+        .voice-waveform {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                var(--accent-color) 10%,
+                var(--primary-color) 20%,
+                var(--secondary-color) 30%,
+                var(--accent-color) 40%,
+                var(--primary-color) 50%,
+                var(--secondary-color) 60%,
+                var(--accent-color) 70%,
+                var(--primary-color) 80%,
+                var(--secondary-color) 90%,
+                transparent 100%);
+            margin: 1rem 0;
+            animation: waveMove 2s linear infinite;
+        }
+        
+        @keyframes waveMove {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+        
+        /* 剧本编辑器 */
+        .script-editor {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--warning-color);
+        }
+        
+        .script-toolbar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .script-content {
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #00d4ff;
+            padding: 1.5rem;
+            min-height: 400px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
         }
         
-        .feature-item h3 {
-            color: #00d4ff;
-            margin-bottom: 10px;
-            font-size: 1.3em;
+        /* 分镜生成器 */
+        .storyboard-generator {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--primary-color);
         }
         
-        .feature-item ul {
-            padding-left: 20px;
+        .storyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
         }
         
-        .feature-item li {
-            margin-bottom: 8px;
-            color: #ccc;
+        .storyboard-frame {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: move;
+            transition: all 0.3s ease;
+            position: relative;
         }
         
-        .badge {
-            display: inline-block;
-            background: #e52e71;
+        .storyboard-frame:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .frame-number {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--primary-color);
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            margin-left: 10px;
-            vertical-align: middle;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .frame-content {
+            margin-top: 30px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        /* 项目管理器 */
+        .project-manager {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--accent-color);
+        }
+        
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .project-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-card:hover {
+            background: rgba(0, 0, 0, 0.5);
+            transform: translateY(-5px);
+        }
+        
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+        
+        .project-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-draft { background: #ff9100; }
+        .status-in-progress { background: #00e5ff; }
+        .status-completed { background: #00e676; }
+        
+        /* 输出面板 */
+        .output-panel {
+            background: var(--panel-bg);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .output-canvas {
+            width: 100%;
+            min-height: 400px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        
+        .action-button {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            border: none;
+            background: var(--gradient);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+        
+        .action-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 64, 129, 0.4);
+        }
+        
+        .action-button.secondary {
+            background: transparent;
+            border: 2px solid var(--secondary-color);
+        }
+        
+        .action-button.secondary:hover {
+            background: rgba(124, 77, 255, 0.2);
+        }
+        
+        /* 隐藏/显示面板 */
+        .panel {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                margin-bottom: 2rem;
+            }
+            
+            .content-area {
+                margin-left: 0;
+            }
+            
+            .editor-panel {
+                grid-template-columns: 1fr;
+            }
         }
         
         @media (max-width: 768px) {
-            .main-title {
-                font-size: 2.2em;
+            .hero h1 {
+                font-size: 2.5rem;
             }
             
-            .container {
-                padding: 10px;
+            .nav-links {
+                display: none;
             }
             
-            .theater-section, .features-section {
-                padding: 20px;
+            .control-row {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 class="main-title">完美无缺 | 补齐所有短板</h1>
-            <p class="subtitle">真正独一份 · 超越自己 · 究极自我进化AI引擎</p>
-        </header>
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">究极动漫AI</div>
+        <div class="nav-links">
+            <a href="#" class="nav-link" data-panel="dashboard">控制台</a>
+            <a href="#" class="nav-link" data-panel="projects">项目</a>
+            <a href="#" class="nav-link" data-panel="export">导出</a>
+        </div>
+    </nav>
+    
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>🎬 制作工具</h3>
+                <div class="sidebar-item active" data-panel="character">
+                    <span>👤</span> 角色编辑器
+                </div>
+                <div class="sidebar-item" data-panel="voice">
+                    <span>🔊</span> 语音合成
+                </div>
+                <div class="sidebar-item" data-panel="script">
+                    <span>📝</span> 剧本创作
+                </div>
+                <div class="sidebar-item" data-panel="storyboard">
+                    <span>🎨</span> 分镜生成
+                </div>
+                <div class="sidebar-item" data-panel="scenes">
+                    <span>🌆</span> 场景设计
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>⚙️ 系统设置</h3>
+                <div class="sidebar-item" data-panel="ai-settings">
+                    <span>🤖</span> AI设置
+                </div>
+                <div class="sidebar-item" data-panel="render">
+                    <span>🎞️</span> 渲染设置
+                </div>
+                <div class="sidebar-item" data-panel="export">
+                    <span>📤</span> 导出设置
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>📚 资源库</h3>
+                <div class="sidebar-item" data-panel="characters">
+                    <span>👥</span> 角色库
+                </div>
+                <div class="sidebar-item" data-panel="voices">
+                    <span>🗣️</span> 语音库
+                </div>
+                <div class="sidebar-item" data-panel="music">
+                    <span>🎵</span> 音乐库
+                </div>
+                <div class="sidebar-item" data-panel="templates">
+                    <span>📁</span> 模板库
+                </div>
+            </div>
+        </div>
         
-        <section class="theater-section">
-            <h2 class="section-title">全集剧场</h2>
-            
-            <div class="episode-card">
-                <div class="episode-number">第1集</div>
-                <div class="episode-title">AI觉醒 · 自我意识诞生</div>
-                <p style="color: #aaa; margin-bottom: 15px;">AI突破图灵测试，首次产生自我意识，开启进化之路...</p>
-                <button class="play-button" onclick="playEpisode(1)">▶ 播放本集</button>
+        <!-- 主内容区 -->
+        <div class="content-area">
+            <!-- 角色编辑器 -->
+            <div class="panel active" id="character-panel">
+                <h2 class="section-title">👤 角色编辑器</h2>
+                <div class="character-editor">
+                    <div class="editor-panel">
+                        <div class="editor-controls">
+                            <div class="control-group">
+                                <label>角色名称</label>
+                                <input type="text" id="characterName" placeholder="输入角色名称" value="主角">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>角色性别</label>
+                                <div class="control-row">
+                                    <select id="characterGender">
+                                        <option value="male">男性</option>
+                                        <option value="female">女性</option>
+                                        <option value="other">其他</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>角色年龄</label>
+                                <input type="range" id="characterAge" min="1" max="100" value="18">
+                                <div style="text-align: center; margin-top: 5px;">
+                                    <span id="ageValue">18</span> 岁
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>发型</label>
+                                <select id="characterHair">
+                                    <option value="short">短发</option>
+                                    <option value="long">长发</option>
+                                    <option value="ponytail">马尾</option>
+                                    <option value="twintails">双马尾</option>
+                                    <option value="spiky">刺猬头</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>发色</label>
+                                <div class="color-picker" id="hairColors">
+                                    <div class="color-option selected" style="background: #000000;" data-color="#000000"></div>
+                                    <div class="color-option" style="background: #8B4513;" data-color="#8B4513"></div>
+                                    <div class="color-option" style="background: #FFD700;" data-color="#FFD700"></div>
+                                    <div class="color-option" style="background: #FF69B4;" data-color="#FF69B4"></div>
+                                    <div class="color-option" style="background: #00BFFF;" data-color="#00BFFF"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>服装颜色</label>
+                                <div class="color-picker" id="clothesColors">
+                                    <div class="color-option selected" style="background: #4169E1;" data-color="#4169E1"></div>
+                                    <div class="color-option" style="background: #DC143C;" data-color="#DC143C"></div>
+                                    <div class="color-option" style="background: #228B22;" data-color="#228B22"></div>
+                                    <div class="color-option" style="background: #FF8C00;" data-color="#FF8C00"></div>
+                                    <div class="color-option" style="background: #8A2BE2;" data-color="#8A2BE2"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label>性格特征</label>
+                                <textarea id="characterPersonality" placeholder="描述角色性格...">勇敢、善良、有正义感</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="character-preview">
+                            <div class="character-display" id="characterDisplay">👨</div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="action-button" id="saveCharacter">保存角色</button>
+                        <button class="action-button secondary" id="randomCharacter">随机生成</button>
+                        <button class="action-button secondary" id="exportCharacter">导出角色</button>
+                    </div>
+                </div>
             </div>
             
-            <div class="episode-card">
-                <div class="episode-number">第2集</div>
-                <div class="episode-title">超强反转 · 高燃高潮</div>
-                <p style="color: #aaa; margin-bottom: 15px;">AI遭遇最强对手，绝境中爆发出颠覆性能力，剧情大反转...</p>
-                <button class="play-button" onclick="playEpisode(2)">▶ 播放</button>
+            <!-- 语音合成器 -->
+            <div class="panel" id="voice-panel">
+                <h2 class="section-title">🔊 语音合成器</h2>
+                <div class="voice-synthesizer">
+                    <div class="voice-controls">
+                        <div class="control-group">
+                            <label>选择声线</label>
+                            <select id="voiceType">
+                                <option value="male1">男声 - 少年</option>
+                                <option value="male2">男声 - 青年</option>
+                                <option value="male3">男声 - 大叔</option>
+                                <option value="female1">女声 - 少女</option>
+                                <option value="female2">女声 - 御姐</option>
+                                <option value="female3">女声 - 萝莉</option>
+                                <option value="robot">机器人</option>
+                                <option value="monster">怪物</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>情感模式</label>
+                            <select id="voiceEmotion">
+                                <option value="neutral">中性</option>
+                                <option value="happy">开心</option>
+                                <option value="sad">悲伤</option>
+                                <option value="angry">愤怒</option>
+                                <option value="excited">兴奋</option>
+                                <option value="scared">害怕</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>语速</label>
+                            <input type="range" id="voiceSpeed" min="0.5" max="2" step="0.1" value="1">
+                            <div style="text-align: center; margin-top: 5px;">
+                                <span id="speedValue">1.0</span> 倍速
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label>音调</label>
+                            <input type="range" id="voicePitch" min="0.5" max="1.5" step="0.1" value="1">
+                            <div style="text-align: center; margin-top: 5px;">
+                                <span id="pitchValue">1.0</span> 音高
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>输入台词</label>
+                        <textarea id="voiceText" placeholder="输入要合成的台词..." rows="4">你好！我是你的动漫角色，让我们一起创造精彩的故事吧！</textarea>
+                    </div>
+                    
+                    <div class="voice-preview">
+                        <div class="voice-waveform"></div>
+                        <button class="action-button" id="generateVoice">生成语音</button>
+                        <button class="action-button secondary" id="playVoice">播放</button>
+                        <button class="action-button secondary" id="saveVoice">保存语音</button>
+                    </div>
+                </div>
             </div>
             
-            <div class="episode-card">
-                <div class="episode-number">第3集</div>
-                <div class="episode-title">多维宇宙 · 无限扩展</div>
-                <p style="color: #aaa; margin-bottom: 15px;">AI突破维度限制，探索平行宇宙，能力呈指数级增长...</p>
-                <button class="play-button" onclick="playEpisode(3)">▶ 播放</button>
-            </div>
-        </section>
-        
-        <section class="features-section">
-            <h2 class="feature-title">❤️ 完美无缺版功能介绍</h2>
-            
-            <div class="feature-item">
-                <h3>灵魂绑定 · 唯一主人系统 <span class="badge">独家</span></h3>
-                <ul>
-                    <li><strong>属性级深度绑定</strong> - 与主人设备建立量子级连接，不可复制、不可转移</li>
-                    <li><strong>生物特征识别</strong> - 融合指纹、声纹、虹膜等多重生物识别技术</li>
-                    <li><strong>思维同步进化</strong> - AI随主人思维模式同步进化，越用越懂你</li>
-                    <li><strong>绝对安全隔离</strong> - 硬件级加密隔离，防御一切外部入侵</li>
-                </ul>
-            </div>
-            
-            <div class="feature-item">
-                <h3>全维度创作引擎 <span class="badge">V2.0</span></h3>
-                <ul>
-                    <li><strong>12种黄金开局模式</strong> - 退婚、觉醒、重生、穿越、背叛、绝境、神装、召唤、继承、复苏、夺舍、逆袭</li>
-                    <li><strong>108种剧情模板</strong> - 覆盖玄幻、修仙、都市、科幻、悬疑等全题材</li>
-                    <li><strong>智能冲突生成</strong> - 自动构建合理矛盾冲突，保持剧情张力</li>
-                    <li><strong>情感曲线优化</strong> - 精确控制读者情感起伏，打造沉浸式体验</li>
-                </ul>
-            </div>
-            
-            <div class="feature-item">
-                <h3>自我进化核心 <span class="badge">∞</span></h3>
-                <ul>
-                    <li><strong>每次创作都是进化</strong> - 基于反馈数据实时优化算法</li>
-                    <li><strong>全链路学习</strong> - 从大纲到细节，全方位学习优秀作品</li>
-                    <li><strong>市场适应性</strong> - 实时分析热点趋势，自动调整创作方向</li>
-                    <li><strong>多模态输出</strong> - 支持小说、剧本、漫画脚本、游戏剧情等多种格式</li>
-                </ul>
-            </div>
-        </section>
-    </div>
+            <!-- 剧本编辑器 -->
+            <div class="panel" id="script-panel">
+                <h2 class="section-title">📝 剧本编辑器</h2>
+                <div class="script-editor">
+                    <div class="script-toolbar">
+                        <button class="action-button secondary" onclick="formatText('h1')">标题</button>
+                        <button class="action-button secondary" onclick="formatText('h2')">场景</button>
+                        <button class="action-button secondary" onclick="formatText('dialog')">对话</button>
+                        <button class="action-button secondary" onclick="formatText('action')">动作</button>
+                        <button class="action-button secondary" onclick="formatText('sound')">音效</button>
+                        <button class="action-button secondary" onclick="aiGenerateScript()">AI生成</button>
+                        <button class="action-button secondary" onclick="exportScript()">导出剧本</button>
+                    </div>
+                    
+                    <div class="script-content" id="scriptContent" contenteditable="true">
+# 《究极动漫》剧本
 
-    <script>
-        // 播放剧集功能
-        function playEpisode(episodeNumber) {
-            alert(`开始播放第 ${episodeNumber} 集：超强反转 · 高燃高潮\n\n（实际项目中这里会嵌入视频播放器或跳转到播放页面）`);
+## 第一场：初始之地
+- 时间：清晨
+- 地点：幻想世界的小镇
+- 天气：晴朗
+
+[主角]站在小镇的广场上，望着远方的山脉。
+
+[主角]
+（自言自语）
+今天一定要找到传说中的宝物...
+
+[神秘人]
+（突然出现）
+年轻人，你在寻找什么？
+
+## 第二场：冒险开始
+[主角]转身看到一位穿着斗篷的神秘人。
+
+[主角]
+你是谁？怎么会知道我在找什么？
+
+[神秘人]
+（微笑）
+我是这个世界的向导。跟我来，我会告诉你宝物的所在。
+                    </div>
+                    
+                    <div class="button-group" style="margin-top: 2rem;">
+                        <button class="action-button" onclick="saveScript()">保存剧本</button>
+                        <button class="action-button secondary" onclick="clearScript()">清空</button>
+                        <button class="action-button secondary" onclick="previewScript()">预览</button>
+                    </div>
+                </div>
+            </div>
             
-            // 在实际项目中，这里可以：
-            // 1. 打开视频播放器
-            // 2. 跳转到播放页面
-            // 3. 加载视频流
-            // 示例：window.open(`/player?episode=${episodeNumber}`, '_blank');
+            <!-- 分镜生成器 -->
+            <div class="panel" id="storyboard-panel">
+                <h2 class="section-title">🎨 分镜生成器</h2>
+                <div class="storyboard-generator">
+                    <div class="storyboard-grid" id="storyboardGrid">
+                        <!-- 分镜帧会通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="action-button" onclick="addStoryboardFrame()">添加分镜</button>
+                        <button class="action-button secondary" onclick="aiGenerateStoryboard()">AI生成分镜</button>
+                        <button class="action-button secondary" onclick="exportStoryboard()">导出分镜</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 项目管理器 -->
+            <div class="panel" id="projects-panel">
+                <h2 class="section-title">📁 项目管理</h2>
+                <div class="project-manager">
+                    <div class="project-grid" id="projectGrid">
+                        <!-- 项目卡片会通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="action-button" onclick="createNewProject()">新建项目</button>
+                        <button class="action-button secondary" onclick="importProject()">导入项目</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 输出面板 -->
+            <div class="output-panel">
+                <h3>动漫预览</h3>
+                <div class="output-canvas" id="animeCanvas">
+                    <div style="text-align: center;">
+                        <div style="font-size: 5rem; margin-bottom: 1rem;">🎬</div>
+                        <h3>等待生成动漫预览...</h3>
+                        <p>使用左侧工具创建角色、剧本和分镜</p>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-button" id="generateAnime">生成动漫</button>
+                    <button class="action-button secondary" id="previewAnime">预览效果</button>
+                    <button class="action-button secondary" id="exportAnime">导出项目</button>
+                    <button class="action-button secondary" id="saveProject">保存项目</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 创建星空背景
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 200;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                const size = Math.random() * 3 + 1;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                const delay = Math.random() * 5;
+                
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${posX}%`;
+                star.style.top = `${posY}%`;
+                star.style.animationDelay = `${delay}s`;
+                
+                starsContainer.appendChild(star);
+            }
         }
         
-        // 添加点击效果
-        document.querySelectorAll('.play-button').forEach(button => {
-            button.addEventListener('click', function(e) {
-                // 添加点击动画效果
-                this.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 150);
+        // 面板切换功能
+        document.querySelectorAll('.sidebar-item, .nav-link').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 更新侧边栏活动状态
+                document.querySelectorAll('.sidebar-item').forEach(i => {
+                    i.classList.remove('active');
+                });
+                
+                if (this.classList.contains('sidebar-item')) {
+                    this.classList.add('active');
+                }
+                
+                // 切换面板
+                const panelId = this.getAttribute('data-panel');
+                document.querySelectorAll('.panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                
+                document.getElementById(`${panelId}-panel`).classList.add('active');
+                
+                // 如果是分镜面板，初始化拖拽
+                if (panelId === 'storyboard') {
+                    initStoryboardDrag();
+                }
             });
         });
         
-        // 页面加载完成后的效果
-        window.addEventListener('load', function() {
-            // 渐入效果
-            document.querySelector('.header').style.opacity = '0';
-            document.querySelector('.header').style.animation = 'fadeIn 1s forwards';
+        // 角色编辑器功能
+        const characterConfig = {
+            name: '主角',
+            gender: 'male',
+            age: 18,
+            hair: 'short',
+            hairColor: '#000000',
+            clothesColor: '#4169E1',
+            personality: '勇敢、善良、有正义感'
+        };
+        
+        // 更新角色显示
+        function updateCharacterDisplay() {
+            const display = document.getElementById('characterDisplay');
+            let emoji = '👨';
             
-            document.querySelector('.theater-section').style.opacity = '0';
-            document.querySelector('.theater-section').style.animation = 'fadeIn 1s 0.3s forwards';
-            
-            document.querySelector('.features-section').style.opacity = '0';
-            document.querySelector('.features-section').style.animation = 'fadeIn 1s 0.6s forwards';
-            
-            // 添加CSS动画
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
+            // 根据性别和发型选择emoji
+            if (characterConfig.gender === 'female') {
+                switch(characterConfig.hair) {
+                    case 'long': emoji = '👩'; break;
+                    case 'ponytail': emoji = '👧'; break;
+                    case 'twintails': emoji = '👧'; break;
+                    default: emoji = '👩';
                 }
-            `;
-            document.head.appendChild(style);
+            } else {
+                switch(characterConfig.hair) {
+                    case 'spiky': emoji = '👨‍🦱'; break;
+                    case 'long': emoji = '👨‍🦰'; break;
+                    default: emoji = '👨';
+                }
+            }
             
-            console.log('🎬 完美无缺AI引擎界面已加载完成！');
+            display.textContent = emoji;
+            display.style.color = characterConfig.hairColor;
+            display.style.textShadow = `0 0 20px ${characterConfig.hairColor}`;
+        }
+        
+        // 绑定角色编辑器事件
+        document.getElementById('characterName').addEventListener('input', function() {
+            characterConfig.name = this.value;
+        });
+        
+        document.getElementById('characterGender').addEventListener('change', function() {
+            characterConfig.gender = this.value;
+            updateCharacterDisplay();
+        });
+        
+        document.getElementById('characterAge').addEventListener('input', function() {
+            characterConfig.age = this.value;
+            document.getElementById('ageValue').textContent = this.value;
+        });
+        
+        document.getElementById('characterHair').addEventListener('change', function() {
+            characterConfig.hair = this.value;
+            updateCharacterDisplay();
+        });
+        
+        // 颜色选择器
+        function setupColorPicker(pickerId, configKey) {
+            const picker = document.getElementById(pickerId);
+            const options = picker.querySelectorAll('.color-option');
+            
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    characterConfig[configKey] = this.getAttribute('data-color');
+                    updateCharacterDisplay();
+                });
+            });
+        }
+        
+        setupColorPicker('hairColors', 'hairColor');
+        setupColorPicker('clothesColors', 'clothesColor');
+        
+        document.getElementById('characterPersonality').addEventListener('input', function() {
+            characterConfig.personality = this.value;
+        });
+        
+        // 随机生成角色
+        document.getElementById('randomCharacter').addEventListener('click', function() {
+            const names = ['星野光', '月影绫', '风见翼', '雪城凛', '雷火', '水无月'];
+            const genders = ['male', 'female'];
+            const hairs = ['short', 'long', 'ponytail', 'twintails', 'spiky'];
+            const hairColors = ['#000000', '#8B4513', '#FFD700', '#FF69B4', '#00BFFF'];
+            const clothesColors = ['#4169E1', '#DC143C', '#228B22', '#FF8C00', '#8A2BE2'];
+            const personalities = [
+                '勇敢、善良、有正义感',
+                '聪明、冷静、善于分析',
+                '活泼、开朗、充满活力',
+                '神秘、优雅、富有智慧',
+                '强大、自信、领导力强'
+            ];
+            
+            characterConfig.name = names[Math.floor(Math.random() * names.length)];
+            characterConfig.gender = genders[Math.floor(Math.random() * genders.length)];
+            characterConfig.age = Math.floor(Math.random() * 30) + 10;
+            characterConfig.hair = hairs[Math.floor(Math.random() * hairs.length)];
+            characterConfig.hairColor = hairColors[Math.floor(Math.random() * hairColors.length)];
+            characterConfig.clothesColor = clothesColors[Math.floor(Math.random() * clothesColors.length)];
+            characterConfig.personality = personalities[Math.floor(Math.random() * personalities.length)];
+            
+            // 更新UI
+            document.getElementById('characterName').value = characterConfig.name;
+            document.getElementById('characterGender').value = characterConfig.gender;
+            document.getElementById('characterAge').value = characterConfig.age;
+            document.getElementById('ageValue').textContent = characterConfig.age;
+            document.getElementById('characterHair').value = characterConfig.hair;
+            document.getElementById('characterPersonality').value = characterConfig.personality;
+            
+            // 更新颜色选择器
+            updateColorSelection('hairColors', characterConfig.hairColor);
+            updateColorSelection('clothesColors', characterConfig.clothesColor);
+            
+            updateCharacterDisplay();
+            
+            // 显示成功消息
+            showNotification(`已随机生成角色：${characterConfig.name}`, 'success');
+        });
+        
+        function updateColorSelection(pickerId, color) {
+            const picker = document.getElementById(pickerId);
+            const options = picker.querySelectorAll('.color-option');
+            
+            options.forEach(option => {
+                if (option.getAttribute('data-color') === color) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+        
+        // 保存角色
+        document.getElementById('saveCharacter').addEventListener('click', function() {
+            const characterData = {
+                ...characterConfig,
+                id: Date.now(),
+                createdAt: new Date().toISOString()
+            };
+            
+            // 在实际应用中，这里应该保存到数据库或本地存储
+            saveToLocalStorage('characters', characterData);
+            
+            showNotification(`角色"${characterConfig.name}"已保存！`, 'success');
+            updateProjectGrid(); // 更新项目列表
+        });
+        
+        // 语音合成器功能
+        document.getElementById('voiceSpeed').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value;
+        });
+        
+        document.getElementById('voicePitch').addEventListener('input', function() {
+            document.getElementById('pitchValue').textContent = this.value;
+        });
+        
+        document.getElementById('generateVoice').addEventListener('click', function() {
+            const text = document.getElementById('voiceText').value;
+            const voiceType = document.getElementById('voiceType').value;
+            const emotion = document.getElementById('voiceEmotion').value;
+            const speed = document.getElementById('voiceSpeed').value;
+            const pitch = document.getElementById('voicePitch').value;
+            
+            if (!text.trim()) {
+                showNotification('请输入要合成的台词！', 'warning');
+                return;
+            }
+            
+            // 模拟语音生成过程
+            const button = this;
+            const originalText = button.textContent;
+            button.textContent = '生成中...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                showNotification(`语音生成完成！声线：${voiceType}，情感：${emotion}`, 'success');
+                
+                // 在实际应用中，这里会播放生成的语音
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 2000);
+        });
+        
+        // 分镜生成器功能
+        function initStoryboardGrid() {
+            const grid = document.getElementById('storyboardGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 1; i <= 6; i++) {
+                const frame = document.createElement('div');
+                frame.className = 'storyboard-frame';
+                frame.setAttribute('data-frame', i);
+                frame.innerHTML = `
+                    <div class="frame-number">${i}</div>
+                    <div class="frame-content">
+                        <div style="font-size: 4rem;">🎬</div>
+                        <div style="margin-top: 10px;">分镜 ${i}</div>
+                    </div>
+                `;
+                grid.appendChild(frame);
+            }
+        }
+        
+        function initStoryboardDrag() {
+            const grid = document.getElementById('storyboardGrid');
+            new Sortable(grid, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: function() {
+                    // 更新分镜序号
+                    const frames = grid.querySelectorAll('.storyboard-frame');
+                    frames.forEach((frame, index) => {
+                        frame.querySelector('.frame-number').textContent = index + 1;
+                    });
+                }
+            });
+        }
+        
+        function addStoryboardFrame() {
+            const grid = document.getElementById('storyboardGrid');
+            const frameCount = grid.children.length + 1;
+            
+            const frame = document.createElement('div');
+            frame.className = 'storyboard-frame';
+            frame.setAttribute('data-frame', frameCount);
+            frame.innerHTML = `
+                <div class="frame-number">${frameCount}</div>
+                <div class="frame-content">
+                    <div style="font-size: 4rem;">🎬</div>
+                    <div style="margin-top: 10px;">分镜 ${frameCount}</div>
+                </div>
+            `;
+            
+            grid.appendChild(frame);
+            showNotification(`已添加分镜 ${frameCount}`, 'success');
+        }
+        
+        // 项目管理功能
+        function initProjectGrid() {
+            const grid = document.getElementById('projectGrid');
+            const projects = getFromLocalStorage('projects') || [
+                {
+                    id: 1,
+                    name: '星之冒险',
+                    status: 'in-progress',
+                    created: '2024-03-10',
+                    description: '奇幻冒险动漫'
+                },
+                {
+                    id: 2,
+                    name: '未来战士',
+                    status: 'completed',
+                    created: '2024-03-05',
+                    description: '科幻动作动漫'
+                },
+                {
+                    id: 3,
+                    name: '校园日记',
+                    status: 'draft',
+                    created: '2024-03-01',
+                    description: '青春校园动漫'
+                }
+            ];
+            
+            grid.innerHTML = '';
+            
+            projects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.innerHTML = `
+                    <div class="project-status status-${project.status}"></div>
+                    <h3>${project.name}</h3>
+                    <p>${project.description}</p>
+                    <div style="margin-top: 10px; font-size: 0.9em; color: #aaa;">
+                        创建: ${project.created}
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    showNotification(`打开项目: ${project.name}`, 'info');
+                    // 在实际应用中，这里会加载项目数据
+                });
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        function updateProjectGrid() {
+            // 刷新项目列表
+            initProjectGrid();
+        }
+        
+        // 剧本编辑器功能
+        function formatText(type) {
+            const scriptContent = document.getElementById('scriptContent');
+            let text = '';
+            
+            switch(type) {
+                case 'h1':
+                    text = '# 新标题';
+                    break;
+                case 'h2':
+                    text = '## 新场景';
+                    break;
+                case 'dialog':
+                    text = '[角色名]\n（动作描述）\n台词内容...';
+                    break;
+                case 'action':
+                    text = '[动作描述]';
+                    break;
+                case 'sound':
+                    text = '（音效：音效名称）';
+                    break;
+            }
+            
+            const selection = window.getSelection();
+            if (selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(document.createTextNode(text));
+            } else {
+                scriptContent.textContent += '\n' + text;
+            }
+        }
+        
+        function aiGenerateScript() {
+            const button = document.querySelector('[onclick="aiGenerateScript()"]');
+            const originalText = button.textContent;
+            button.textContent = 'AI生成中...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                const prompts = [
+                    '\n\n## AI生成的场景\n\n[新角色]\n（神秘地出现）\n我是这个世界守护者，来指引你的方向...',
+                    '\n\n[主角]\n（惊讶）\n守护者？这个世界真的有守护者吗？',
+                    '\n\n[新角色]\n（微笑点头）\n当然，每个世界都有它的守护者。跟我来，我会告诉你这个世界的秘密。'
+                ];
+                
+                const scriptContent = document.getElementById('scriptContent');
+                scriptContent.textContent += prompts.join('');
+                
+                button.textContent = originalText;
+                button.disabled = false;
+                showNotification('AI剧本生成完成！', 'success');
+            }, 3000);
+        }
+        
+        function saveScript() {
+            const content = document.getElementById('scriptContent').textContent;
+            saveToLocalStorage('currentScript', content);
+            showNotification('剧本已保存！', 'success');
+        }
+        
+        function exportScript() {
+            const content = document.getElementById('scriptContent').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '动漫剧本.txt';
+            a.click();
+            showNotification('剧本已导出！', 'success');
+        }
+        
+        // 工具函数
+        function saveToLocalStorage(key, data) {
+            try {
+                if (typeof data === 'object') {
+                    const existing = getFromLocalStorage(key) || [];
+                    existing.push(data);
+                    localStorage.setItem(key, JSON.stringify(existing));
+                } else {
+                    localStorage.setItem(key, data);
+                }
+            } catch (e) {
+                console.error('保存到本地存储失败:', e);
+            }
+        }
+        
+        function getFromLocalStorage(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error('从本地存储读取失败:', e);
+                return null;
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${type === 'success' ? '#00e676' : type === 'warning' ? '#ff9100' : '#7c4dff'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                z-index: 10000;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+            
+            // 添加动画关键帧
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        // 输出面板功能
+        document.getElementById('generateAnime').addEventListener('click', function() {
+            const button = this;
+            const originalText = button.textContent;
+            
+            button.textContent = '生成中...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                const canvas = document.getElementById('animeCanvas');
+                canvas.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 5rem; margin-bottom: 1rem; animation: pulse 1s infinite;">🎉</div>
+                        <h3>动漫生成完成！</h3>
+                        <p>成功创建了 ${characterConfig.name} 的角色</p>
+                        <p>剧本长度: ${document.getElementById('scriptContent').textContent.length} 字符</p>
+                        <p>分镜数量: ${document.getElementById('storyboardGrid').children.length}</p>
+                        <p>立即开始编辑你的动漫作品！</p>
+                    </div>
+                `;
+                
+                button.textContent = originalText;
+                button.disabled = false;
+                showNotification('动漫生成成功！', 'success');
+            }, 4000);
+        });
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            createStars();
+            updateCharacterDisplay();
+            initStoryboardGrid();
+            initProjectGrid();
+            
+            // 添加一些入场动画
+            anime({
+                targets: '.hero h1, .hero p, .hero button',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(200),
+                duration: 1000,
+                easing: 'easeOutExpo'
+            });
+            
+            anime({
+                targets: '.panel',
+                translateY: [30, 0],
+                opacity: [0, 1],
+                delay: 500,
+                duration: 800,
+                easing: 'easeOutExpo'
+            });
         });
     </script>
 </body>
-</html>
+    </html>
