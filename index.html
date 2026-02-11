@@ -123,18 +123,15 @@
                 return;
             }
 
-            // 从全局 teams 数组中查找球队
             const homeTeam = window.teamsData.find(t => t.name === homeName);
             const awayTeam = window.teamsData.find(t => t.name === awayName);
             if (!homeTeam || !awayTeam) return;
 
-            // 泊松期望进球：主队期望进球 = 主队场均进球 * 客队场均失球 / 联赛平均进球？简化：直接用主队进攻 vs 客队防守
-            // 更准确的：主队期望进球 = home.avg_scored * away.avg_conceded / (league_avg)？这里我们简化：用主队进攻强度 * 客队防守强度归一化
-            // 我们直接用主队场均进球和客队场均失球的平均值作为期望（考虑到主场优势，主队+0.2）
-            const homeExpected = (homeTeam.avg_scored + awayTeam.avg_conceded) / 2 + 0.2;  // 主场优势
+            // 期望进球（主场优势+0.2）
+            const homeExpected = (homeTeam.avg_scored + awayTeam.avg_conceded) / 2 + 0.2;
             const awayExpected = (awayTeam.avg_scored + homeTeam.avg_conceded) / 2;
 
-            // 计算胜平负概率（0-5球足够了）
+            // 胜平负概率（0-5球）
             let homeWin = 0, draw = 0, awayWin = 0;
             for (let i = 0; i <= 5; i++) {
                 for (let j = 0; j <= 5; j++) {
@@ -144,22 +141,22 @@
                     else awayWin += prob;
                 }
             }
-            // 归一化到100%
+            // 归一化
             const total = homeWin + draw + awayWin;
             homeWin = (homeWin / total * 100).toFixed(1);
             draw = (draw / total * 100).toFixed(1);
             awayWin = (awayWin / total * 100).toFixed(1);
 
-            // 查找最可能比分（概率最高的前3个）
+            // 最可能比分（前3）
             let scoreProbs = [];
             for (let i = 0; i <= 4; i++) {
                 for (let j = 0; j <= 4; j++) {
                     const prob = poissonProb(homeExpected, i) * poissonProb(awayExpected, j);
-                    scoreProbs.push({score: `${i}-${j}`, prob});
+                    scoreProbs.push({score: `${i}-${j}`, prob: prob});
                 }
             }
-            scoreProbs.sort((a,b) => b.prob - a.prob);
-            const topScores = scoreProbs.slice(0,3).map(s => 
+            scoreProbs.sort((a, b) => b.prob - a.prob);
+            const topScores = scoreProbs.slice(0, 3).map(s => 
                 `${s.score} (${(s.prob*100).toFixed(1)}%)`
             ).join(', ');
 
@@ -181,10 +178,12 @@
         // 获取数据并渲染页面
         async function loadData() {
             try {
-                const res = await fetch('https://cdn.jsdelivr.net/gh/zxc8011097/zxc8011097.github.io@main/data.json');
+                // 加时间戳绕过 CDN 缓存
+                const timestamp = new Date().getTime();
+                const res = await fetch('https://cdn.jsdelivr.net/gh/zxc8011097/zxc8011097.github.io@main/data.json?t=' + timestamp);
                 const data = await res.json();
                 const teams = data.teams;
-                window.teamsData = teams;  // 存储为全局，供预测使用
+                window.teamsData = teams;
 
                 // 渲染积分榜
                 const tbody = document.getElementById('table-body');
@@ -211,6 +210,9 @@
                 // 填充下拉框
                 const homeSelect = document.getElementById('home-team');
                 const awaySelect = document.getElementById('away-team');
+                // 清空原有选项（保留第一个提示项）
+                homeSelect.innerHTML = '<option value="">— 选择主队 —</option>';
+                awaySelect.innerHTML = '<option value="">— 选择客队 —</option>';
                 teams.sort((a,b) => a.name.localeCompare(b.name)).forEach(team => {
                     const option1 = document.createElement('option');
                     option1.value = team.name;
