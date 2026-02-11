@@ -1,12 +1,27 @@
 {
+  "competition": "Premier League",
+  "season": "2025",
+  "last_updated": "2025-04-03T12:00:00Z",
   "teams": [
-    {
-      "name": "Arsenal",
-      "points": 65
-    },
-    {
-      "name": "Liverpool",
-      "points": 64
-    }
+    {"position":1,"name":"Arsenal","played":29,"won":21,"drawn":5,"lost":3,"points":68,"goals_for":72,"goals_against":29,"goal_difference":43,"avg_scored":2.48,"avg_conceded":1.0},
+    {"position":2,"name":"Liverpool","played":29,"won":20,"drawn":7,"lost":2,"points":67,"goals_for":70,"goals_against":29,"goal_difference":41,"avg_scored":2.41,"avg_conceded":1.0},
+    {"position":3,"name":"Manchester City","played":29,"won":19,"drawn":6,"lost":4,"points":63,"goals_for":71,"goals_against":35,"goal_difference":36,"avg_scored":2.45,"avg_conceded":1.21},
+    {"position":4,"name":"Aston Villa","played":29,"won":18,"drawn":5,"lost":6,"points":59,"goals_for":66,"goals_against":43,"goal_difference":23,"avg_scored":2.28,"avg_conceded":1.48},
+    {"position":5,"name":"Tottenham","played":29,"won":17,"drawn":6,"lost":6,"points":57,"goals_for":62,"goals_against":46,"goal_difference":16,"avg_scored":2.14,"avg_conceded":1.59},
+    {"position":6,"name":"Manchester United","played":29,"won":16,"drawn":4,"lost":9,"points":52,"goals_for":48,"goals_against":42,"goal_difference":6,"avg_scored":1.66,"avg_conceded":1.45},
+    {"position":7,"name":"Newcastle","played":29,"won":15,"drawn":5,"lost":9,"points":50,"goals_for":63,"goals_against":44,"goal_difference":19,"avg_scored":2.17,"avg_conceded":1.52},
+    {"position":8,"name":"West Ham","played":29,"won":13,"drawn":8,"lost":8,"points":47,"goals_for":53,"goals_against":52,"goal_difference":1,"avg_scored":1.83,"avg_conceded":1.79},
+    {"position":9,"name":"Chelsea","played":29,"won":12,"drawn":8,"lost":9,"points":44,"goals_for":56,"goals_against":52,"goal_difference":4,"avg_scored":1.93,"avg_conceded":1.79},
+    {"position":10,"name":"Brighton","played":29,"won":11,"drawn":10,"lost":8,"points":43,"goals_for":54,"goals_against":49,"goal_difference":5,"avg_scored":1.86,"avg_conceded":1.69},
+    {"position":11,"name":"Wolverhampton","played":29,"won":12,"drawn":6,"lost":11,"points":42,"goals_for":48,"goals_against":48,"goal_difference":0,"avg_scored":1.66,"avg_conceded":1.66},
+    {"position":12,"name":"Fulham","played":29,"won":11,"drawn":6,"lost":12,"points":39,"goals_for":46,"goals_against":47,"goal_difference":-1,"avg_scored":1.59,"avg_conceded":1.62},
+    {"position":13,"name":"Bournemouth","played":29,"won":10,"drawn":8,"lost":11,"points":38,"goals_for":49,"goals_against":58,"goal_difference":-9,"avg_scored":1.69,"avg_conceded":2.0},
+    {"position":14,"name":"Crystal Palace","played":29,"won":8,"drawn":9,"lost":12,"points":33,"goals_for":38,"goals_against":48,"goal_difference":-10,"avg_scored":1.31,"avg_conceded":1.66},
+    {"position":15,"name":"Brentford","played":29,"won":8,"drawn":8,"lost":13,"points":32,"goals_for":48,"goals_against":54,"goal_difference":-6,"avg_scored":1.66,"avg_conceded":1.86},
+    {"position":16,"name":"Everton","played":29,"won":8,"drawn":8,"lost":13,"points":32,"goals_for":33,"goals_against":42,"goal_difference":-9,"avg_scored":1.14,"avg_conceded":1.45},
+    {"position":17,"name":"Nottingham","played":29,"won":7,"drawn":9,"lost":13,"points":30,"goals_for":42,"goals_against":54,"goal_difference":-12,"avg_scored":1.45,"avg_conceded":1.86},
+    {"position":18,"name":"Luton","played":29,"won":6,"drawn":7,"lost":16,"points":25,"goals_for":45,"goals_against":60,"goal_difference":-15,"avg_scored":1.55,"avg_conceded":2.07},
+    {"position":19,"name":"Burnley","played":29,"won":4,"drawn":7,"lost":18,"points":19,"goals_for":33,"goals_against":62,"goal_difference":-29,"avg_scored":1.14,"avg_conceded":2.14},
+    {"position":20,"name":"Sheffield Utd","played":29,"won":3,"drawn":6,"lost":20,"points":15,"goals_for":27,"goals_against":77,"goal_difference":-50,"avg_scored":0.93,"avg_conceded":2.66}
   ]
 }
