@@ -1,49 +1,12 @@
 {
-  "success": true,
-  "message": "数据更新成功 (GitHub Actions)",
-  "update_time": "2026-02-11 12:07:03",
-  "data": {
-    "热那亚": {
-      "elo": 0.905,
-      "form": "LWDL",
-      "attack": 0.98,
-      "defense": 1.05,
-      "trend": "防守尚可"
+  "teams": [
+    {
+      "name": "Arsenal",
+      "points": 65
     },
-    "那不勒斯": {
-      "elo": 1.138,
-      "form": "WWLD",
-      "attack": 1.18,
-      "defense": 0.92,
-      "trend": "攻击强势"
-    },
-    "皇马": {
-      "elo": 1.142,
-      "form": "DWWW",
-      "attack": 1.22,
-      "defense": 0.88,
-      "trend": "状态正佳"
-    },
-    "曼城": {
-      "elo": 1.141,
-      "form": "WWWD",
-      "attack": 1.25,
-      "defense": 0.85,
-      "trend": "控场为主"
-    },
-    "利物浦": {
-      "elo": 1.11,
-      "form": "WLWW",
-      "attack": 1.2,
-      "defense": 0.9,
-      "trend": "攻势足球"
-    },
-    "拜仁慕尼黑": {
-      "elo": 1.16,
-      "form": "WWLW",
-      "attack": 1.23,
-      "defense": 0.87,
-      "trend": "德甲霸主"
+    {
+      "name": "Liverpool",
+      "points": 64
     }
-  }
+  ]
 }
