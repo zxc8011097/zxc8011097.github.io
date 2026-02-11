@@ -1208,10 +1208,10 @@ function sendChat() {
         } else if (/比分/.test(t)) {
             appendMsg(`🔥 推荐比分：\n① ${top3[0].hg}-${top3[0].ag}\n② ${top3[1].hg}-${top3[1].ag}\n③ ${top3[2].hg}-${top3[2].ag}\n\n📊 核心方向：${main}\n⚽ 大小球：${ou}`, false);
         } else if (/稳单/.test(t)) {
-            appendMsg(`🎯 稳单推荐：${t1.hg}-${t1.ag} n方向：${main} n准确率：${lastPred.acc}% n建议搭配：${main} + ${ou} 2串1`, false);
+            appendMsg(`🎯 稳单推荐：${t1.hg}-${t1.ag}\n方向：${main}\n准确率：${lastPred.acc}%\n建议搭配：${main} + ${ou} 2串1`, false);
         } else if (/冷|防冷/.test(t)) {
             const cold = calc.list.filter(s => s.hg + s.ag >= 3).slice(0, 3);
-            appendMsg(`⚠️ 防冷提示： n① ${cold[0].hg}-${cold[0].ag} n② ${cold[1].hg}-${cold[1].ag} n③ ${cold[2].hg}-${cold[2].ag} n n高风险比分，需谨慎参考。`, false);
+            appendMsg(`⚠️ 防冷提示：\n① ${cold[0].hg}-${cold[0].ag}\n② ${cold[1].hg}-${cold[1].ag}\n③ ${cold[2].hg}-${cold[2].ag}\n\n高风险比分，需谨慎参考。`, false);
         } else if (/半全场/.test(t)) {
             const ht = halfTime(lastCalc.calc.list[0].hg, lastCalc.calc.list[0].ag);
             let htText = "胶着均衡";
