@@ -1,29 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>足球预测工具箱</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚽ 英超积分榜 + AI 比分预测</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #333; }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background-color: #4CAF50; color: white; }
+        select, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px 5px 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover { background-color: #45a049; }
+        .prediction-box {
+            background: #e3f2fd;
+            border-left: 5px solid #2196F3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .score-prob {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #0d47a1;
+        }
+    </style>
 </head>
 <body>
-    <h1>⚽ 英超积分榜</h1>
-    <!-- 这里放球队列表 -->
-    <ul id="team-list"></ul>
+    <h1>⚽ 英超积分榜 & AI 比分预测</h1>
+    
+    <div class="container">
+        <h2>📊 当前积分榜</h2>
+        <div id="loading">加载数据中...</div>
+        <table id="standings-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th>排名</th>
+                    <th>球队</th>
+                    <th>场次</th>
+                    <th>胜</th>
+                    <th>平</th>
+                    <th>负</th>
+                    <th>进球</th>
+                    <th>失球</th>
+                    <th>净胜球</th>
+                    <th>积分</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>🤖 AI 比分预测（泊松模型）</h2>
+        <p>选择两支球队，预测胜平负概率及最可能比分：</p>
+        <div>
+            <select id="home-team">
+                <option value="">— 选择主队 —</option>
+            </select>
+            <span style="font-weight:bold;"> VS </span>
+            <select id="away-team">
+                <option value="">— 选择客队 —</option>
+            </select>
+            <button onclick="predictMatch()">🔮 预测</button>
+        </div>
+        <div id="prediction-result" class="prediction-box" style="display:none;"></div>
+    </div>
 
     <script>
-        async function loadFootballData() {
+        // 泊松概率计算函数
+        function poissonProb(mean, k) {
+            if (mean === 0) return k === 0 ? 1 : 0;
+            return Math.exp(-mean) * Math.pow(mean, k) / factorial(k);
+        }
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            return n * factorial(n - 1);
+        }
+
+        // 预测主队、客队的胜平负概率及最可能比分
+        function predictMatch() {
+            const homeName = document.getElementById('home-team').value;
+            const awayName = document.getElementById('away-team').value;
+            if (!homeName || !awayName) {
+                alert('请选择主队和客队');
+                return;
+            }
+            if (homeName === awayName) {
+                alert('主队和客队不能相同');
+                return;
+            }
+
+            // 从全局 teams 数组中查找球队
+            const homeTeam = window.teamsData.find(t => t.name === homeName);
+            const awayTeam = window.teamsData.find(t => t.name === awayName);
+            if (!homeTeam || !awayTeam) return;
+
+            // 泊松期望进球：主队期望进球 = 主队场均进球 * 客队场均失球 / 联赛平均进球？简化：直接用主队进攻 vs 客队防守
+            // 更准确的：主队期望进球 = home.avg_scored * away.avg_conceded / (league_avg)？这里我们简化：用主队进攻强度 * 客队防守强度归一化
+            // 我们直接用主队场均进球和客队场均失球的平均值作为期望（考虑到主场优势，主队+0.2）
+            const homeExpected = (homeTeam.avg_scored + awayTeam.avg_conceded) / 2 + 0.2;  // 主场优势
+            const awayExpected = (awayTeam.avg_scored + homeTeam.avg_conceded) / 2;
+
+            // 计算胜平负概率（0-5球足够了）
+            let homeWin = 0, draw = 0, awayWin = 0;
+            for (let i = 0; i <= 5; i++) {
+                for (let j = 0; j <= 5; j++) {
+                    const prob = poissonProb(homeExpected, i) * poissonProb(awayExpected, j);
+                    if (i > j) homeWin += prob;
+                    else if (i === j) draw += prob;
+                    else awayWin += prob;
+                }
+            }
+            // 归一化到100%
+            const total = homeWin + draw + awayWin;
+            homeWin = (homeWin / total * 100).toFixed(1);
+            draw = (draw / total * 100).toFixed(1);
+            awayWin = (awayWin / total * 100).toFixed(1);
+
+            // 查找最可能比分（概率最高的前3个）
+            let scoreProbs = [];
+            for (let i = 0; i <= 4; i++) {
+                for (let j = 0; j <= 4; j++) {
+                    const prob = poissonProb(homeExpected, i) * poissonProb(awayExpected, j);
+                    scoreProbs.push({score: `${i}-${j}`, prob});
+                }
+            }
+            scoreProbs.sort((a,b) => b.prob - a.prob);
+            const topScores = scoreProbs.slice(0,3).map(s => 
+                `${s.score} (${(s.prob*100).toFixed(1)}%)`
+            ).join(', ');
+
+            // 显示结果
+            const resultDiv = document.getElementById('prediction-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h3>🏆 ${homeName} vs ${awayName}</h3>
+                <p style="font-size:1.2em;">
+                    <span style="color:#4CAF50;">${homeName} 胜：${homeWin}%</span> 
+                    | 平：${draw}% 
+                    | <span style="color:#f44336;">${awayName} 胜：${awayWin}%</span>
+                </p>
+                <p>📊 最可能比分：${topScores}</p>
+                <p style="color:#666; font-size:0.9em;">*基于泊松分布+主场优势，仅供参考</p>
+            `;
+        }
+
+        // 获取数据并渲染页面
+        async function loadData() {
             try {
                 const res = await fetch('https://cdn.jsdelivr.net/gh/zxc8011097/zxc8011097.github.io@main/data.json');
                 const data = await res.json();
-                // 生成列表 HTML
-                const html = data.teams.map(team => 
-                    `<li>${team.name} - ${team.points} 分</li>`
-                ).join('');
-                document.getElementById('team-list').innerHTML = html;
+                const teams = data.teams;
+                window.teamsData = teams;  // 存储为全局，供预测使用
+
+                // 渲染积分榜
+                const tbody = document.getElementById('table-body');
+                tbody.innerHTML = '';
+                teams.forEach(team => {
+                    const row = `<tr>
+                        <td>${team.position}</td>
+                        <td><strong>${team.name}</strong></td>
+                        <td>${team.played}</td>
+                        <td>${team.won}</td>
+                        <td>${team.drawn}</td>
+                        <td>${team.lost}</td>
+                        <td>${team.goals_for}</td>
+                        <td>${team.goals_against}</td>
+                        <td>${team.goal_difference}</td>
+                        <td><strong>${team.points}</strong></td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('standings-table').style.display = 'table';
+
+                // 填充下拉框
+                const homeSelect = document.getElementById('home-team');
+                const awaySelect = document.getElementById('away-team');
+                teams.sort((a,b) => a.name.localeCompare(b.name)).forEach(team => {
+                    const option1 = document.createElement('option');
+                    option1.value = team.name;
+                    option1.textContent = team.name;
+                    homeSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = team.name;
+                    option2.textContent = team.name;
+                    awaySelect.appendChild(option2);
+                });
+
             } catch (err) {
-                console.error('数据加载失败', err);
-                document.getElementById('team-list').innerHTML = '<li>数据加载失败</li>';
+                document.getElementById('loading').innerHTML = '❌ 加载数据失败，请稍后重试。';
+                console.error(err);
             }
         }
-        loadFootballData();
+
+        loadData();
     </script>
 </body>
 </html>
