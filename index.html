@@ -1,4 +1,3 @@
-index.html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -290,7 +289,7 @@ index.html
   (function() {
     "use strict";
 
-    // ----------  配置 ----------
+    // ---------- 🔑 配置 ----------
     const FOOTBALL_API_KEY = '15aff59763f342bba8dd7da8782d467a'; // 您的真实密钥
     const API_BASE = 'https://api.football-data.org/v4';
 
@@ -646,7 +645,7 @@ index.html
     function updateRank() {
       let html = '';
       for (let i=0; i<rankNames.length; i++) {
-        html += `<div class="rank-row"><span>${i+1}. ${rankNames[i]}</span><span> ${Math.floor(Math.random()*5000+8000)}</span></div>`;
+        html += `<div class="rank-row"><span>${i+1}. ${rankNames[i]}</span><span>🏆 ${Math.floor(Math.random()*5000+8000)}</span></div>`;
       }
       document.getElementById('rankList').innerHTML = html;
     }
