@@ -1,0 +1,12 @@
+{
+  "teams": [
+    {
+      "name": "Arsenal",
+      "points": 65
+    },
+    {
+      "name": "Liverpool",
+      "points": 64
+    }
+  ]
+}
