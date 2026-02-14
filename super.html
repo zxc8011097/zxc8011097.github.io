@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>超级AI</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:#121212;color:#fff;display:flex;flex-direction:column;height:100vh}
+.app-header{background:#1e1e1e;padding:16px;display:flex;align-items:center;gap:12px}
+.nav-tabs{display:flex;background:#1e1e1e;overflow-x:auto;border-bottom:1px solid #2a2a2a}
+.nav-tab{padding:12px 16px;color:#999;cursor:pointer}
+.nav-tab.active{color:#00e5ff}
+.chat{flex:1;padding:16px;overflow-y:auto}
+.msg{max-width:80%;padding:10px 12px;border-radius:12px;margin-bottom:10px}
+.ai{background:#2a2a2e}
+.user{background:#00e5ff;color:#000;margin-left:auto}
+.input{display:flex;padding:12px;background:#1e1e1e}
+input{flex:1;background:#2a2a2a;border:none;border-radius:24px;padding:0 16px;color:#fff}
+button{margin-left:8px;background:#00e5ff;border:none;border-radius:24px;padding:0 16px}
+</style>
+</head>
+<body>
+<div class="app-header"><div style="width:56px;height:56px;background:linear-gradient(135deg,#00e5ff,#007bff);border-radius:12px"></div><div><h1>超级AI</h1></div></div>
+<div class="nav-tabs">
+<div class="nav-tab" onclick="location.href='index.html'">首页</div>
+<div class="nav-tab" onclick="location.href='ai.html'">AI推荐</div>
+<div class="nav-tab active" onclick="location.href='super.html'">超级AI</div>
+<div class="nav-tab" onclick="location.href='live.html'">模拟直播</div>
+<div class="nav-tab" onclick="location.href='player.html'">球员数据</div>
+</div>
+<div class="chat" id="chat">
+<div class="msg ai">你好，我是足球AI，有什么可以帮你？</div>
+</div>
+<div class="input">
+<input id="text" placeholder="输入问题...">
+<button onclick="send()">发送</button>
+</div>
+<script>
+function send(){
+let t=document.getElementById('text').value;
+if(!t)return;
+let chat=document.getElementById('chat');
+chat.innerHTML+='<div class="msg user">'+t+'</div>';
+document.getElementById('text').value='';
+chat.scrollTop=chat.scrollHeight;
+}
+</script>
+</body>
+</html>
