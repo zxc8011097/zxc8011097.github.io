@@ -3,44 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>超级足球AI</title>
+<title>超级足球AI - 专业足球赛事分析平台</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#121212;color:#fff}
-.app-header{background:#1e1e1e;padding:16px;display:flex;align-items:center;gap:12px}
-.app-icon{width:56px;height:56px;background:linear-gradient(135deg,#00e5ff,#007bff);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff}
-.nav-tabs{display:flex;background:#1e1e1e;overflow-x:auto;border-bottom:1px solid #2a2a2a}
-.nav-tab{padding:12px 16px;color:#999;white-space:nowrap;cursor:pointer}
-.nav-tab.active{color:#00e5ff;border-bottom:2px solid #00e5ff}
-.container{padding:16px}
-.card{background:#1e1e1e;border-radius:12px;padding:16px;margin-bottom:16px}
-.match{background:#2a2a2a;border-radius:8px;padding:12px;margin-bottom:8px}
-.match .row{display:flex;justify-content:space-between;font-size:12px;color:#999;margin-bottom:8px}
-.score{font-size:20px;font-weight:bold;color:#00e5ff;text-align:center}
-.teams{display:flex;justify-content:space-between;margin-top:4px}
+*{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif}
+body{background:#0c0c0c;color:#fff}
+.header{background:#151515;padding:14px;display:flex;align-items:center;gap:12px}
+.logo{width:50px;height:50px;background:linear-gradient(90deg,#00e5ff,#007bff);border-radius:12px;display:grid;place-items:center;font-weight:bold;font-size:22px}
+.nav{display:flex;overflow-x:auto;background:#181818;border-bottom:1px solid #2a2a2a}
+.nav a{padding:12px 14px;white-space:nowrap;color:#aaa;text-decoration:none}
+.nav a.active{color:#00e5ff;border-bottom:2px solid #00e5ff}
+
+.banner{
+    padding:30px 20px;
+    text-align:center;
+    background:linear-gradient(135deg,#111,#222);
+    margin-bottom:10px;
+}
+.banner h1{
+    font-size:22px;
+    margin-bottom:10px;
+    color:#00e5ff;
+}
+.banner p{
+    font-size:14px;
+    color:#ccc;
+    line-height:1.5;
+}
+
+.box{
+    background:#1a1a1a;
+    margin:10px;
+    border-radius:16px;
+    padding:20px;
+}
+.box h2{
+    font-size:16px;
+    margin-bottom:12px;
+    color:#00e5ff;
+}
+.box p{
+    font-size:14px;
+    color:#ddd;
+    line-height:1.6;
+    margin-bottom:8px;
+}
 </style>
 </head>
 <body>
-<div class="app-header">
-<div class="app-icon">AI</div>
+
+<div class="header">
+<div class="logo">AI</div>
 <div>
-<h1>超级足球AI</h1>
-<p>实时赛事&比分数据</p>
+<div>超级足球AI</div>
+<div style="font-size:12px;color:#999">专业足球赛事分析平台</div>
 </div>
 </div>
-<div class="nav-tabs">
-<div class="nav-tab active" onclick="location.href='index.html'">首页</div>
-<div class="nav-tab" onclick="location.href='ai.html'">AI推荐</div>
-<div class="nav-tab" onclick="location.href='super.html'">超级AI</div>
-<div class="nav-tab" onclick="location.href='live.html'">模拟直播</div>
-<div class="nav-tab" onclick="location.href='player.html'">球员数据</div>
+
+<div class="nav">
+<a class="active" href="/">首页</a>
+<a href="/ai.html">AI推荐</a>
+<a href="/super.html">超级AI</a>
+<a href="/live.html">模拟直播</a>
+<a href="/player.html">球员数据</a>
 </div>
-<div class="container">
-<div class="card">
-<h3>🔥 实时赛事</h3>
-<div id="matches" style="margin-top:12px">加载中...</div>
+
+<div class="banner">
+<h1>欢迎使用 超级足球AI</h1>
+<p>专业 · 实时 · 智能 · 全面的足球赛事服务平台</p>
 </div>
+
+<div class="box">
+<h2>📌 平台介绍</h2>
+<p>超级足球AI是一款面向全球球迷的足球智能分析平台，我们通过实时数据、AI算法、赛事模拟，为用户提供最专业、最及时、最全面的足球信息服务。</p>
+<p>无论你是喜欢看球、聊球、分析比赛，还是研究数据、了解战术，这里都能满足你的需求。</p>
 </div>
-<script src="scripts/football.js"></script>
+
+<div class="box">
+<h2>⚽ 平台功能介绍</h2>
+<p>• 真实赛事模拟直播：实时模拟比赛进程，包含进球、黄牌、换人、数据统计</p>
+<p>• 完整比赛数据：控球率、射门、射正、角球、犯规、传球等专业数据</p>
+<p>• 球队阵容与战术：查看首发名单、阵型、战术板、球场站位</p>
+<p>• 超级AI智能问答：支持足球问题咨询、赛事分析、球员信息查询</p>
+<p>• 历史交锋记录：查看两队近期对战成绩，快速了解对战走势</p>
+<p>• 球员数据中心：查看球星信息、进球、助攻、位置等详细资料</p>
+</div>
+
+<div class="box">
+<h2>🎯 适合人群</h2>
+<p>• 足球爱好者：随时了解比赛动态、数据和分析</p>
+<p>• 球迷用户：观看模拟直播，体验沉浸式看球感受</p>
+<p>• 赛事分析者：获取专业数据、战术、阵容信息</p>
+<p>• 新手用户：简单易懂，一键进入功能，无需复杂操作</p>
+</div>
+
+<div class="box">
+<h2>📖 使用指南</h2>
+<p>首页：平台介绍与功能说明</p>
+<p>AI推荐：查看赛事分析与预测</p>
+<p>超级AI：与足球AI助手对话提问</p>
+<p>模拟直播：观看实时比赛模拟</p>
+<p>球员数据：查看球员信息与统计</p>
+</div>
+
+<div class="box">
+<h2>💡 平台特点</h2>
+<p>• 界面简洁清爽，使用简单方便</p>
+<p>• 数据实时更新，体验接近真实直播</p>
+<p>• 功能全面完整，一站式足球服务</p>
+<p>• 永久免费使用，无广告、无收费</p>
+</div>
+
 </body>
 </html>
