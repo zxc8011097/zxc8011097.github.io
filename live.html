@@ -3,37 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>模拟直播</title>
+<title>超级足球AI · 实时模拟直播</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#121212;color:#fff}
-.app-header{background:#1e1e1e;padding:16px;display:flex;align-items:center;gap:12px}
-.nav-tabs{display:flex;background:#1e1e1e;overflow-x:auto;border-bottom:1px solid #2a2a2a}
-.nav-tab{padding:12px 16px;color:#999;cursor:pointer}
-.nav-tab.active{color:#00e5ff}
-.container{padding:16px}
-.card{background:#1e1e1e;border-radius:12px;padding:16px;margin-top:16px}
-.score{font-size:36px;font-weight:bold;text-align:center;margin:16px 0}
-.event{background:#2a2a2a;padding:8px 12px;border-radius:8px;margin-bottom:8px}
-.time{color:#00e5ff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#0c0c0c;color:#fff}
+.head{background:#1a1a1a;padding:16px;display:flex;align-items:center;gap:14px}
+.logo{width:54px;height:54px;background:linear-gradient(135deg,#00e5ff,#007bff);border-radius:14px;display:grid;place-items:center;font-size:26px;font-weight:700}
+.tabs{display:flex;overflow-x:auto;background:#1a1a1a;border-bottom:1px solid #2a2a2a}
+.tab{padding:13px 17px;white-space:nowrap;color:#aaa;cursor:pointer}
+.tab.active{color:#00e5ff;border-bottom:2px solid #00e5ff}
+.box{background:#1a1a1a;margin:14px;padding:18px;border-radius:16px;box-shadow:0 6px 20px #0006}
+.live-tag{background:#ff4444;padding:5px 10px;border-radius:20px;font-size:12px;animation:flash 1.2s infinite}
+@keyframes flash{0%{opacity:1}50%{opacity:.6}100%{opacity:1}}
+.score-area{display:flex;justify-content:space-around;align-items:center;margin:20px 0}
+.team{text-align:center}
+.t-name{font-size:17px;margin-top:8px}
+.t-score{font-size:46px;font-weight:700;color:#00e5ff;text-shadow:0 0 14px #00e5ff88}
+.vs{color:#777;font-size:22px}
+.sub-tabs{display:flex;gap:16px;margin:10px 0;border-bottom:1px solid #333}
+.sub-tab{padding:8px 0;color:#999;cursor:pointer}
+.sub-tab.active{color:#00e5ff}
+.panel{display:none}
+.panel.active{display:block}
+.event{background:#222;margin:6px 0;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:10px}
+.time{color:#00e5ff;font-weight:700;min-width:40px}
+.icon{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700}
+.goal{background:#00c853}
+.yellow{background:#ffd600;color:#000}
+.red{background:#d50000}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#222;padding:14px;border-radius:10px;text-align:center}
+.val{font-size:22px;font-weight:700;color:#00e5ff}
+.label{font-size:12px;color:#999;margin-top:4px}
 </style>
 </head>
+
 <body>
-<div class="app-header"><div style="width:56px;height:56px;background:linear-gradient(135deg,#00e5ff,#007bff);border-radius:12px"></div><div><h1>模拟直播</h1></div></div>
-<div class="nav-tabs">
-<div class="nav-tab" onclick="location.href='index.html'">首页</div>
-<div class="nav-tab" onclick="location.href='ai.html'">AI推荐</div>
-<div class="nav-tab" onclick="location.href='super.html'">超级AI</div>
-<div class="nav-tab active" onclick="location.href='live.html'">模拟直播</div>
-<div class="nav-tab" onclick="location.href='player.html'">球员数据</div>
-</div>
-<div class="container">
-<div class="card">
-<div>曼联 vs 曼城 直播中 63'</div>
-<div class="score">1 - 2</div>
-<div class="event"><span class="time">63'</span> 进球！斯特林</div>
-<div class="event"><span class="time">45'</span> 上半场结束</div>
+<div class="head">
+<div class="logo">AI</div>
+<div>
+<h2>超级足球AI</h2>
+<p style="font-size:13px;color:#999">实时赛事 · 智能模拟直播</p>
 </div>
 </div>
+
+<div class="tabs">
+<div class="tab" onclick="go('index')">首页</div>
+<div class="tab" onclick="go('ai')">AI推荐</div>
+<div class="tab" onclick="go('super')">超级AI</div>
+<div class="tab active">模拟直播</div>
+<div class="tab" onclick="go('player')">球员数据</div>
+</div>
+
+<div class="box">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:16px">⚽ 实时赛事直播</div>
+<div class="live-tag" id="status">加载中...</div>
+</div>
+
+<div class="score-area">
+<div class="team">
+<div class="t-score" id="hScore">0</div>
+<div class="t-name" id="hName">主队</div>
+</div>
+<div class="vs">VS</div>
+<div class="team">
+<div class="t-score" id="aScore">0</div>
+<div class="t-name" id="aName">客队</div>
+</div>
+</div>
+
+<div class="sub-tabs">
+<div class="sub-tab active" onclick="show('events')">直播事件</div>
+<div class="sub-tab" onclick="show('stats')">比赛数据</div>
+</div>
+
+<div class="panel active" id="events">
+<div id="feed">正在加载真实比赛...</div>
+</div>
+
+<div class="panel" id="stats">
+<div class="stat-grid">
+<div class="stat"><div class="val">53%</div><div class="label">控球率</div></div>
+<div class="stat"><div class="val">47%</div><div class="label">控球率</div></div>
+<div class="stat"><div class="val">6</div><div class="label">射门</div></div>
+<div class="stat"><div class="val">9</div><div class="label">射门</div></div>
+<div class="stat"><div class="val">3</div><div class="label">射正</div></div>
+<div class="stat"><div class="val">5</div><div class="label">射正</div></div>
+<div class="stat"><div class="val">2</div><div class="label">角球</div></div>
+<div class="stat"><div class="val">4</div><div class="label">角球</div></div>
+</div>
+</div>
+</div>
+
+<script>
+const API = "https://api.football-data.org/v4/matches?status=LIVE";
+const KEY = "15aff59763f342bba8dd7da8782d467a";
+
+let minute = 0;
+let home = 0, away = 0;
+
+function go(p){location.href=p+'.html'}
+function show(id){
+document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'))
+document.querySelectorAll('.sub-tab').forEach(e=>e.classList.remove('active'))
+document.getElementById(id).classList.add('active')
+event.target.classList.add('active')
+}
+
+async function loadLive(){
+const el = document.getElementById('feed');
+el.innerHTML = '正在获取真实直播赛事...';
+try{
+const r = await fetch(API,{headers:{"X-Auth-Token":KEY}});
+const d = await r.json();
+const m = d.matches[0];
+if(!m){el.innerHTML='暂无直播赛事';document.getElementById('status').textContent='暂无直播';return}
+
+document.getElementById('hName').innerText = m.homeTeam.name;
+document.getElementById('aName').innerText = m.awayTeam.name;
+home = m.score.fullTime.homeTeam || 0;
+away = m.score.fullTime.awayTeam || 0;
+document.getElementById('hScore').innerText = home;
+document.getElementById('aScore').innerText = away;
+
+minute = Math.floor(Math.random()*45)+45;
+document.getElementById('status').innerText = `直播中 ${minute}'`;
+simLive();
+}catch(e){el.innerHTML='加载失败'}
+}
+
+function simLive(){
+const feed = document.getElementById('feed');
+setInterval(()=>{
+minute++;
+document.getElementById('status').innerText = `直播中 ${minute}'`;
+if(Math.random()>0.92){
+const g = Math.random()>0.5;
+if(g) home++;
+else away++;
+document.getElementById('hScore').innerText=home;
+document.getElementById('aScore').innerText=away;
+feed.innerHTML = `
+<div class="event"><div class="time">${minute}'</div><div class="icon goal">G</div><div>${g?'主队':'客队'} 进球！</div></div>
+`+feed.innerHTML;
+}
+if(Math.random()>0.88){
+feed.innerHTML = `
+<div class="event"><div class="time">${minute}'</div><div class="icon yellow">Y</div><div>球员犯规 黄牌</div></div>
+`+feed.innerHTML;
+}
+},9000);
+}
+
+loadLive();
+</script>
 </body>
 </html>
