@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI推荐</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:#121212;color:#fff}
+.app-header{background:#1e1e1e;padding:16px;display:flex;align-items:center;gap:12px}
+.app-icon{width:56px;height:56px;background:linear-gradient(135deg,#00e5ff,#007bff);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff}
+.nav-tabs{display:flex;background:#1e1e1e;overflow-x:auto;border-bottom:1px solid #2a2a2a}
+.nav-tab{padding:12px 16px;color:#999;cursor:pointer}
+.nav-tab.active{color:#00e5ff;border-bottom:2px solid #00e5ff}
+.container{padding:16px}
+.card{background:#1e1e1e;border-radius:12px;padding:16px;margin-top:16px}
+.item{background:#2a2a2a;padding:12px;border-radius:8px;margin-bottom:8px}
+.tags{display:flex;gap:8px;margin-top:8px}
+.tag{background:#00e5ff;color:#000;padding:4px 8px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app-header">
+<div class="app-icon">AI</div>
+<div><h1>超级足球AI</h1><p>AI赛事推荐</p></div>
+</div>
+<div class="nav-tabs">
+<div class="nav-tab" onclick="location.href='index.html'">首页</div>
+<div class="nav-tab active" onclick="location.href='ai.html'">AI推荐</div>
+<div class="nav-tab" onclick="location.href='super.html'">超级AI</div>
+<div class="nav-tab" onclick="location.href='live.html'">模拟直播</div>
+<div class="nav-tab" onclick="location.href='player.html'">球员数据</div>
+</div>
+<div class="container">
+<div class="card">
+<div class="item">
+<div>曼联 vs 曼城</div>
+<div class="tags">
+<span class="tag">胜平负：主负</span>
+<span class="tag">比分：1-2</span>
+</div>
+</div>
+<div class="item">
+<div>巴萨 vs 皇马</div>
+<div class="tags">
+<span class="tag">胜平负：主胜</span>
+<span class="tag">比分：2-1</span>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
