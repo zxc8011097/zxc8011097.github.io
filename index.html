@@ -696,8 +696,27 @@ function getTeam(name){
 function getHomeName(){return isCustom?customHome:document.getElementById("homeTeam").value;}
 function getAwayName(){return isCustom?customAway:document.getElementById("awayTeam").value;}
 
-// 球队列表（全面扩展版）同之前，此处省略以节省篇幅，实际使用请保留完整列表
-const teams = { /* 同之前版本，此处省略但实际代码中必须包含完整列表 */ };
+// 球队列表（增加基本球队供选择）
+const teams = {
+  英超: {
+    "2025-2026": ["曼城","阿森纳","利物浦","切尔西","曼联","热刺"]
+  },
+  西甲: {
+    "2025-2026": ["皇马","巴萨","马竞","塞维利亚","皇家社会","毕尔巴鄂"]
+  },
+  德甲: {
+    "2025-2026": ["拜仁","多特","勒沃库森","莱比锡","法兰克福","门兴"]
+  },
+  意甲: {
+    "2025-2026": ["尤文","国米","AC米兰","那不勒斯","罗马","拉齐奥"]
+  },
+  法甲: {
+    "2025-2026": ["巴黎","马赛","摩纳哥","里昂","里尔","雷恩"]
+  },
+  中超: {
+    "2025-2026": ["上海海港","广州队","北京国安","山东泰山","成都蓉城","武汉三镇"]
+  }
+};
 
 // 工具函数
 function showToast(msg){const t=document.getElementById("toast");t.innerText=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
@@ -883,30 +902,32 @@ function updateCountdown(matchDate) {
   }
 }
 
-// 初始化历史分布统计
+// 初始化历史分布统计（修复缺失的 leagueScores）
 function initHistDist() {
-  // 从 leagueScores 中统计所有比分（实际应该按实力差分类，这里简化）
-  let allScores = [];
-  for (let l in leagueScores) {
-    let seasons = leagueScores[l];
-    for (let s in seasons) {
-      allScores = allScores.concat(seasons[s]);
-    }
+  // 提供一个默认的历史分布（基于常见比分）
+  histDist = {
+    "0-0": 0.08,
+    "1-0": 0.12,
+    "0-1": 0.10,
+    "1-1": 0.14,
+    "2-0": 0.09,
+    "0-2": 0.07,
+    "2-1": 0.11,
+    "1-2": 0.09,
+    "2-2": 0.06,
+    "3-0": 0.05,
+    "0-3": 0.03,
+    "3-1": 0.04,
+    "1-3": 0.03,
+    "3-2": 0.02,
+    "2-3": 0.01
+  };
+  // 归一化
+  let total = Object.values(histDist).reduce((a,b)=>a+b,0);
+  for (let s in histDist) {
+    histDist[s] /= total;
   }
-  // 这里应该统计不同实力差下的分布，但实力差未知，我们用全局分布作为先验
-  // 简化为所有比分的频率
-  let freq = {};
-  allScores.forEach(score => {
-    freq[score] = (freq[score] || 0) + 1;
-  });
-  let total = allScores.length;
-  for (let score in freq) {
-    freq[score] /= total;
-  }
-  histDist = freq;
 }
-
-// 调用初始化
 initHistDist();
 
 // ==================== 增强版 startAI 函数（融合历史分布） ====================
@@ -1286,6 +1307,14 @@ function getGoalDescription(min, weather) {
   return desc;
 }
 
+// 红牌评分影响（修复：随机选择被罚球员）
+function updateRating(players, type, team) {
+  // type 未使用，只是标识
+  // 随机选择一个球员扣分
+  let idx = Math.floor(Math.random() * players.length);
+  players[idx].rating -= 1.5;
+}
+
 // ==================== 增强版 startSim 函数（包含教练、动态控球、评分、新闻） ====================
 function startSim() {
   let hn = getHomeName(); let an = getAwayName();
@@ -1496,8 +1525,8 @@ function startSim() {
     }
     // 红牌
     else if (rand < 0.02 * (1 + ref.redAvg) && min > 15 && !varPending) {
-      if (Math.random() < 0.5) { hRed++; event = `🔴 ${displayMin}′ ${hn} 球员被红牌罚下！`; updateRating(homePlayers, 'red', 0); } 
-      else { aRed++; event = `🔴 ${displayMin}′ ${an} 球员被红牌罚下！`; updateRating(awayPlayers, 'red', 0); }
+      if (Math.random() < 0.5) { hRed++; event = `🔴 ${displayMin}′ ${hn} 球员被红牌罚下！`; updateRating(homePlayers, 'red', hn); } 
+      else { aRed++; event = `🔴 ${displayMin}′ ${an} 球员被红牌罚下！`; updateRating(awayPlayers, 'red', an); }
     }
     // 中柱
     else if (rand < 0.03 && !varPending) {
@@ -1609,12 +1638,6 @@ function startSim() {
     if (Math.random() < 0.1) aFoul++;
     updateStats();
   }, 500);
-}
-
-function updateRating(players, type, idx) {
-  if (type === 'red') {
-    players[idx].rating -= 1.5;
-  }
 }
 
 function generateMatchNews(hn, an, homePlayers, awayPlayers, hg, ag) {
@@ -1798,6 +1821,25 @@ langToggle.addEventListener('click', () => {
   currentLang = currentLang === 'zh' ? 'en' : 'zh';
   updateLang(currentLang);
 });
+
+// 缺失的两个函数：showLineupEditor 和 sharePrediction
+function showLineupEditor() {
+  showToast("阵容编辑功能开发中");
+  // 可以简单显示隐藏的编辑器
+  let editor = document.getElementById('lineupEditor');
+  editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+}
+function sharePrediction() {
+  let hn = getHomeName(); let an = getAwayName();
+  let score = document.getElementById('aiScore').innerText;
+  if (score === '— : —') { showToast("请先进行AI预测"); return; }
+  let text = `我预测 ${hn} ${score} ${an} (来自足球AI大数据预测)`;
+  if (navigator.share) {
+    navigator.share({ title: '足球AI预测', text: text }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text).then(()=> showToast("预测已复制到剪贴板"));
+  }
+}
 
 // 初始化
 document.ontouchmove = null; window.ontouchmove = null;
