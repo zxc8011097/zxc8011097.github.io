@@ -958,13 +958,11 @@ function computeTeamChemistry(team, players) {
   return teamChemistry[team];
 }
 
-// ==================== 新增函数：客场适应系数 ====================
+// ==================== 修复：getAwayAdaptation 使用 getTeam 避免未定义 ====================
 function getAwayAdaptation(team) {
-  // 基于历史客场胜率（可用elo客场表现），简单用客场胜率
-  let teamObj = teamData[team] || { awayWin: 40 };
-  let awayWinRate = teamObj.awayWin / 100; // 0.4
-  // 联赛平均客场胜率约0.3
-  return awayWinRate / 0.3; // 范围0.7-1.3
+  let teamObj = getTeam(team);
+  let awayWinRate = teamObj.awayWin / 100;
+  return awayWinRate / 0.3; // 范围约 0.7-1.3
 }
 
 // ==================== 新增函数：赛程密集惩罚 ====================
@@ -978,166 +976,368 @@ function getSchedulePenalty(teamName) {
   return 1.0;
 }
 
-// ==================== 全量球队与球员数据（扩展球员能力值）====================
+// ==================== teamData 定义所有球队（扩展球员能力值）====================
 const teamData = {
-  曼城:{power:96,attack:94,defend:91,home:1.12,away:0.94,homeWin:78,awayWin:65,recentForm:3, 
-       players:[
-         {name:"哈兰德", finishing:95, speed:90, passing:75, penalty:90, freeKick:60, aggression:75, defending:40, composure:85, stamina:88, form:0.9, position:"FW", heading:88, weakFoot:80, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
-         {name:"福登", finishing:82, speed:88, passing:85, penalty:75, freeKick:70, aggression:65, defending:45, composure:80, stamina:82, form:0.85, position:"MF", heading:60, weakFoot:85, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"德布劳内", finishing:85, speed:80, passing:96, penalty:85, freeKick:92, aggression:60, defending:50, composure:92, stamina:78, form:0.8, position:"MF", heading:55, weakFoot:90, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
-         {name:"B席", finishing:80, speed:84, passing:90, penalty:80, freeKick:75, aggression:70, defending:60, composure:88, stamina:85, form:0.85, position:"MF", heading:50, weakFoot:85, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
-         {name:"罗德里", finishing:70, speed:70, passing:85, penalty:70, freeKick:55, aggression:80, defending:85, composure:90, stamina:90, form:0.9, position:"MF", heading:75, weakFoot:70, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
-         {name:"格拉利什", finishing:75, speed:82, passing:84, penalty:70, freeKick:68, aggression:65, defending:50, composure:75, stamina:80, form:0.75, position:"FW", heading:60, weakFoot:80, bigGame:0.6, foot:"right", isNationalTeamPlayer:true},
-         {name:"多库", finishing:78, speed:95, passing:75, penalty:65, freeKick:50, aggression:70, defending:35, composure:70, stamina:75, form:0.7, position:"FW", heading:45, weakFoot:75, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
-         {name:"阿尔瓦雷斯", finishing:88, speed:85, passing:78, penalty:80, freeKick:72, aggression:75, defending:45, composure:82, stamina:85, form:0.8, position:"FW", heading:70, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
-         {name:"科瓦契奇", finishing:70, speed:78, passing:83, penalty:70, freeKick:65, aggression:75, defending:70, composure:80, stamina:80, form:0.75, position:"MF", heading:60, weakFoot:75, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"努内斯", finishing:72, speed:80, passing:76, penalty:65, freeKick:58, aggression:70, defending:60, composure:75, stamina:78, form:0.7, position:"MF", heading:65, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
-         {name:"阿克", finishing:50, speed:75, passing:70, penalty:50, freeKick:40, aggression:70, defending:82, composure:85, stamina:85, form:0.8, position:"DF", heading:78, weakFoot:65, bigGame:0.6, foot:"left", isNationalTeamPlayer:true},
-         {name:"迪亚斯", finishing:45, speed:70, passing:68, penalty:45, freeKick:35, aggression:65, defending:90, composure:90, stamina:88, form:0.9, position:"DF", heading:85, weakFoot:60, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
-         {name:"斯通斯", finishing:55, speed:72, passing:80, penalty:60, freeKick:50, aggression:60, defending:80, composure:85, stamina:80, form:0.8, position:"DF", heading:75, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"格瓦迪奥尔", finishing:60, speed:80, passing:75, penalty:60, freeKick:55, aggression:75, defending:85, composure:82, stamina:90, form:0.85, position:"DF", heading:82, weakFoot:70, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
-         {name:"沃克", finishing:45, speed:92, passing:70, penalty:50, freeKick:40, aggression:80, defending:78, composure:80, stamina:85, form:0.8, position:"DF", heading:70, weakFoot:65, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"刘易斯", finishing:50, speed:82, passing:72, penalty:55, freeKick:45, aggression:65, defending:65, composure:75, stamina:78, form:0.7, position:"DF", heading:60, weakFoot:75, bigGame:0.4, foot:"right", isNationalTeamPlayer:false},
-         {name:"奥尔特加", finishing:30, speed:50, passing:55, penalty:30, freeKick:20, aggression:40, defending:20, composure:70, stamina:70, form:0.8, position:"GK", diving:85, handling:80, reflexes:82, rushing:70, communication:75},
-         {name:"埃德森", finishing:35, speed:55, passing:78, penalty:40, freeKick:25, aggression:45, defending:25, composure:85, stamina:75, form:0.9, position:"GK", diving:90, handling:88, reflexes:89, rushing:85, communication:90}
-       ],
-       substitutes:[
-         {name:"菲利普斯", finishing:65, speed:70, passing:75, penalty:65, freeKick:60, aggression:75, defending:70, composure:75, stamina:80, form:0.7, position:"MF"},
-         {name:"戈麦斯", finishing:55, speed:75, passing:68, penalty:55, freeKick:45, aggression:70, defending:75, composure:70, stamina:78, form:0.7, position:"DF"},
-         {name:"帕尔默", finishing:75, speed:80, passing:78, penalty:70, freeKick:68, aggression:65, defending:40, composure:80, stamina:75, form:0.8, position:"MF"}
-       ],
-       formation:"4-3-3",
-       city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)", xG:2.1, xGA:0.9, altitude:50,
-       injuries:["德布劳内(核心中场) 伤缺"], styleDesc:"高位逼抢,边路进攻", xgImpact:0.2, 
-       coach:{name:"瓜迪奥拉", style:"控球", aggression:0.7, defense:0.6, tacticFactor:1.1, possibleStyles:["控球","高位逼抢"]}},
-  // 其他球队可类似扩展，此处仅保留曼城作为示例
-  // 实际使用时需包含所有球队
-};
-
-// ==================== 修复：为所有常用联赛添加默认球队列表 ====================
-const teams = {
-  英超: {"2025-2026": ["曼城","阿森纳","利物浦","切尔西","曼联","热刺","纽卡斯尔","布莱顿","西汉姆联","阿斯顿维拉","狼队","埃弗顿","富勒姆","布伦特福德","水晶宫","诺丁汉森林","伯恩茅斯","谢菲尔德联","卢顿"]},
-  西甲: {"2025-2026": ["皇马","巴萨","马竞","塞维利亚","皇家社会","比利亚雷亚尔","毕尔巴鄂","贝蒂斯","奥萨苏纳","赫罗纳","巴列卡诺","马洛卡","加的斯","阿尔梅里亚","塞尔塔","巴伦西亚","赫塔费","西班牙人","埃尔切"]},
-  德甲: {"2025-2026": ["拜仁","多特蒙德","莱比锡","勒沃库森","柏林联合","弗赖堡","沃尔夫斯堡","门兴","法兰克福","科隆","美因茨","霍芬海姆","波鸿","奥格斯堡","斯图加特","不莱梅","沙尔克04","柏林赫塔"]},
-  意甲: {"2025-2026": ["尤文图斯","国际米兰","AC米兰","那不勒斯","罗马","拉齐奥","亚特兰大","佛罗伦萨","都灵","博洛尼亚","乌迪内斯","恩波利","萨索洛","莱切","斯佩齐亚","桑普多利亚","维罗纳","蒙扎"]},
-  法甲: {"2025-2026": ["巴黎圣日耳曼","马赛","摩纳哥","里尔","雷恩","尼斯","朗斯","里昂","图卢兹","洛里昂","欧塞尔","特鲁瓦","布雷斯特","阿雅克肖","昂热","克莱蒙","蒙彼利埃","南特"]},
-  中超: {"2025-2026": ["上海海港","山东泰山","广州队","北京国安","上海申花","成都蓉城","浙江队","武汉三镇","长春亚泰","天津津门虎","深圳队","青岛海牛","南通支云","沧州雄狮","河南嵩山龙门","梅州客家"]},
-  欧冠: {"2025-2026": ["皇马","拜仁","曼城","利物浦","巴黎","AC米兰","国米","切尔西","巴萨","多特","尤文","那不勒斯","马竞","莱比锡","本菲卡","波尔图","阿贾克斯","顿涅茨克矿工","萨尔茨堡","凯尔特人"]},
-  葡超: {"2025-2026": ["本菲卡","波尔图","葡萄牙体育","布拉加","吉马良斯","莫雷伦斯","法马利康","埃斯托里尔","维泽拉","阿罗卡","博阿维斯塔","马里迪莫","查维斯","圣克拉拉","通德拉","费雷拉"]},
-  荷甲: {"2025-2026": ["阿贾克斯","埃因霍温","费耶诺德","阿尔克马尔","特温特","乌得勒支","海伦芬","维特斯","奈梅亨","福伦丹","埃门","坎布尔","瓦尔韦克","前进之鹰","格罗宁根","福图纳"]},
-  苏超: {"2025-2026": ["凯尔特人","流浪者","哈茨","阿伯丁","利文斯顿","希伯尼安","邓迪联","圣米伦","马瑟韦尔","罗斯郡","基尔马诺克","圣约翰斯通"]},
-  巴甲: {"2025-2026": ["帕尔梅拉斯","弗拉门戈","科林蒂安","圣保罗","米内罗竞技","巴西国际","格雷米奥","弗鲁米嫩塞","博塔弗戈","桑托斯","巴拉纳竞技","塞阿拉","福塔雷萨","巴伊亚","戈亚斯","阿瓦伊","库亚巴","尤文图德"]},
-  阿甲: {"2025-2026": ["博卡青年","河床","竞技","拉普拉塔大学生","圣洛伦索","国防与司法","阿根廷独立","罗萨里奥中央","拉努斯","戈多伊克鲁斯","科隆竞技","阿尔多希维","兵工厂","班菲尔德","纽维尔老男孩","萨兰迪兵工厂"]},
-  J联赛: {"2025-2026": ["川崎前锋","横滨水手","神户胜利船","鹿岛鹿角","名古屋鲸鱼","广岛三箭","大阪樱花","鸟栖砂岩","札幌冈萨多","福冈黄蜂","柏太阳神","东京FC","大阪钢巴","清水鼓动","湘南海洋","新潟天鹅","京都不死鸟","横滨FC","甲府风林"]},
-  K联赛: {"2025-2026": ["全北现代","蔚山现代","浦项制铁","水原三星","首尔FC","大邱FC","济州联","仁川联","江原FC","城南FC","光州FC","金泉尚武"]},
-  英冠: {"2025-2026": ["伯恩利","谢菲联","米德尔斯堡","布莱克本","诺维奇","沃特福德","西布朗","斯托克城","普雷斯顿","米尔沃尔","考文垂","加的夫城","哈德斯菲尔德","赫尔城","布里斯托城","雷丁","伯明翰","女王公园巡游者","斯旺西","卢顿"]},
-  英甲: {"2025-2026": ["谢周三","伊普斯维奇","普利茅斯","彼得堡联","博尔顿","朴茨茅斯","牛津联","查尔顿","威科姆","林肯城","切尔滕汉姆","莫克姆","阿克灵顿","伯顿","剑桥联","弗利特伍德","什鲁斯伯里","埃克塞特城"]},
-  西乙: {"2025-2026": ["拉斯帕尔马斯","格拉纳达","莱万特","阿拉维斯","埃瓦尔","马拉加","特内里费","奥维耶多","萨拉戈萨","卡塔赫纳","阿尔瓦塞特","希洪","蓬费拉迪纳","卢戈","米兰德斯","安道尔","韦斯卡","伊维萨"]},
-  意乙: {"2025-2026": ["弗罗西诺内","热那亚","巴里","帕尔马","比萨","南蒂罗尔","雷吉纳","贝内文托","卡利亚里","科莫","摩德纳","特尔纳纳","奇塔代拉","科森扎","阿斯科利","威尼斯","帕多瓦","斯帕尔"]},
-  德乙: {"2025-2026": ["汉堡","达姆施塔特","海登海姆","帕德博恩","圣保利","杜塞尔多夫","卡尔斯鲁厄","基尔","纽伦堡","汉诺威","罗斯托克","比勒费尔德","马格德堡","不伦瑞克","雷根斯堡","菲尔特","奥厄","凯泽斯劳滕"]},
-  法乙: {"2025-2026": ["圣埃蒂安","波尔多","梅斯","勒阿弗尔","巴斯蒂亚","索肖","甘冈","卡昂","亚眠","奎维利鲁昂","尼奥尔","罗德兹","瓦朗谢讷","巴黎FC","拉瓦勒","昂纳西","第戎","尼姆"]},
-  葡甲: {"2025-2026": ["法伦斯","本菲卡B队","波尔图B队","科维良","马夫拉","佩纳菲耶尔","奥利韦伦斯","维拉弗兰昆森","阿马多拉","泰罗芬斯","雷克斯欧斯","卡萨皮亚","维塞乌","莱里亚","费伦斯"]},
-  荷乙: {"2025-2026": ["阿尔克马尔青年队","阿贾克斯青年队","埃因霍温青年队","乌得勒支青年队","特尔斯达","马斯特里赫特","芬洛","多德勒支","罗达JC","奥斯","海牙","布雷达","阿尔梅勒城","登博斯","赫尔蒙德","格拉夫夏普"]},
-  俄超: {"2025-2026": ["圣彼得堡泽尼特","莫斯科中央陆军","莫斯科迪纳摩","莫斯科斯巴达","克拉斯诺达尔","罗斯托夫","索契","乌拉尔","阿克伦托利亚蒂","希姆基","奥伦堡","诺夫哥罗德","沃罗涅日火炬","莫斯科火车头"]},
-  土超: {"2025-2026": ["加拉塔萨雷","费内巴切","贝西克塔斯","特拉布宗体育","代米尔体育","科尼亚体育","开塞利体育","安塔利亚体育","阿拉尼亚体育","锡瓦斯体育","伊斯坦布尔","卡拉京吕克成功","吉雷森体育","哈塔伊体育"]},
-  美职联: {"2025-2026": ["洛杉矶FC","迈阿密国际","纽约城","芝加哥火焰","西雅图海湾人","亚特兰大联","波特兰伐木者","哥伦布机员","费城联合","华盛顿联","多伦多FC","堪萨斯城","达拉斯FC","洛杉矶银河","科罗拉多急流"]},
-  比甲: {"2025-2026": ["布鲁日","安德莱赫特","标准列日","根特","安特卫普","亨克","沙勒罗瓦","梅赫伦","圣图尔登","奥斯坦德","瓦勒海姆","欧本","塞里辛","科特赖克"]},
-  奥超: {"2025-2026": ["萨尔茨堡红牛","维也纳快速","格拉茨风暴","林茨","奥地利维也纳","沃尔夫斯贝格","阿尔塔奇","里德","哈特贝格","瓦滕斯"]},
-  瑞士超: {"2025-2026": ["伯尔尼年轻人","巴塞尔","苏黎世","圣加仑","塞尔维特","锡永","卢塞恩","洛桑体育","卢加诺","温特图尔"]},
-  丹超: {"2025-2026": ["哥本哈根","中日德兰","布隆德比","奥尔堡","奥胡斯","北西兰","兰德斯","欧登塞","瓦埃勒","霍森斯","灵比","锡尔克堡"]}
-};
-
-// 比赛重要性因子
-function getImportanceFactor(homeTeam, awayTeam, lg) {
-  if (lg.isCup) return 1.2;
-  return parseFloat(document.getElementById('importanceWeight').value);
-}
-
-// 社交媒体情绪模拟
-async function fetchSocialMentions(team) {
-  return Math.floor(Math.random() * 10000) + 5000;
-}
-
-// 伤病动态更新（模拟）
-async function fetchInjuries(team) {
-  let injuries = [];
-  if (Math.random() < 0.2) {
-    injuries.push(`${team.players[Math.floor(Math.random()*team.players.length)].name} 轻伤`);
-  }
-  return injuries;
-}
-
-// 机器学习权重（可从外部JSON加载）
-let mlWeights = {
-  eloDiff: 0.35,
-  homeAdv: 0.2,
-  formDiff: 0.15,
-  injuryImpact: 0.05,
-  weatherImpact: 0.03,
-  h2hAdv: 0.12
-};
-
-// ==================== 工具函数 ====================
-function showToast(msg){const t=document.getElementById("toast");t.innerText=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
-function showLoading(){document.getElementById("loadingModal").classList.add("active")}
-function hideLoading(){document.getElementById("loadingModal").classList.remove("active")}
-
-// 自定义球队时使用默认球员
-let customHomePlayers = [];
-let customAwayPlayers = [];
-
-function useCustomTeam() {
-  let h = document.getElementById("customHome").value.trim();
-  let a = document.getElementById("customAway").value.trim();
-  if (!h || !a) { showToast("请输入主队和客队名称"); return; }
-  customHome = h; customAway = a; isCustom = true;
-  customHomePlayers = [{ name: "未知", finishing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW" }];
-  customAwayPlayers = [{ name: "未知", finishing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW" }];
-  document.getElementById("matchInfo").innerText = `已启用手写：${h} vs ${a}`;
-  document.getElementById("homeTeam").innerHTML = "<option>已使用手写球队</option>";
-  document.getElementById("awayTeam").innerHTML = "<option>已使用手写球队</option>";
-  document.getElementById("homeTeam").disabled = true;
-  document.getElementById("awayTeam").disabled = true;
-  document.getElementById("leagueNote").innerText = "自定义球队：通用联赛风格";
-}
-
-// 赛季切换（动态生成）
-function loadSeasons() {
-  let tab = document.getElementById('seasonTab');
-  tab.innerHTML = '';
-  let start = 1919;
-  for (let y = start; y <= 2030; y+=10) {
-    let div = document.createElement('div');
-    div.className = 'season';
-    div.innerText = `${y}-${y+1}`;
-    if (y === 2025) div.classList.add('active');
-    div.onclick = () => {
-      document.querySelectorAll("#seasonTab .season").forEach(x=>x.classList.remove("active"));
-      div.classList.add("active"); season = div.innerText; isCustom=false;
-      document.getElementById("homeTeam").disabled = false;
-      document.getElementById("awayTeam").disabled = false;
-      document.getElementById("matchInfo").innerText="未选择球队";
-      loadTeam();
+  // 英超
+  曼城: {
+    power:96, attack:94, defend:91, home:1.12, away:0.94, homeWin:78, awayWin:65, recentForm:3, 
+    players: [
+      {name:"哈兰德", finishing:95, speed:90, passing:75, penalty:90, freeKick:60, aggression:75, defending:40, composure:85, stamina:88, form:0.9, position:"FW", heading:88, weakFoot:80, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"福登", finishing:82, speed:88, passing:85, penalty:75, freeKick:70, aggression:65, defending:45, composure:80, stamina:82, form:0.85, position:"MF", heading:60, weakFoot:85, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"德布劳内", finishing:85, speed:80, passing:96, penalty:85, freeKick:92, aggression:60, defending:50, composure:92, stamina:78, form:0.8, position:"MF", heading:55, weakFoot:90, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
+      {name:"B席", finishing:80, speed:84, passing:90, penalty:80, freeKick:75, aggression:70, defending:60, composure:88, stamina:85, form:0.85, position:"MF", heading:50, weakFoot:85, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
+      {name:"罗德里", finishing:70, speed:70, passing:85, penalty:70, freeKick:55, aggression:80, defending:85, composure:90, stamina:90, form:0.9, position:"MF", heading:75, weakFoot:70, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
+      {name:"格拉利什", finishing:75, speed:82, passing:84, penalty:70, freeKick:68, aggression:65, defending:50, composure:75, stamina:80, form:0.75, position:"FW", heading:60, weakFoot:80, bigGame:0.6, foot:"right", isNationalTeamPlayer:true},
+      {name:"多库", finishing:78, speed:95, passing:75, penalty:65, freeKick:50, aggression:70, defending:35, composure:70, stamina:75, form:0.7, position:"FW", heading:45, weakFoot:75, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
+      {name:"阿尔瓦雷斯", finishing:88, speed:85, passing:78, penalty:80, freeKick:72, aggression:75, defending:45, composure:82, stamina:85, form:0.8, position:"FW", heading:70, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"科瓦契奇", finishing:70, speed:78, passing:83, penalty:70, freeKick:65, aggression:75, defending:70, composure:80, stamina:80, form:0.75, position:"MF", heading:60, weakFoot:75, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"努内斯", finishing:72, speed:80, passing:76, penalty:65, freeKick:58, aggression:70, defending:60, composure:75, stamina:78, form:0.7, position:"MF", heading:65, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
+      {name:"阿克", finishing:50, speed:75, passing:70, penalty:50, freeKick:40, aggression:70, defending:82, composure:85, stamina:85, form:0.8, position:"DF", heading:78, weakFoot:65, bigGame:0.6, foot:"left", isNationalTeamPlayer:true},
+      {name:"迪亚斯", finishing:45, speed:70, passing:68, penalty:45, freeKick:35, aggression:65, defending:90, composure:90, stamina:88, form:0.9, position:"DF", heading:85, weakFoot:60, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"斯通斯", finishing:55, speed:72, passing:80, penalty:60, freeKick:50, aggression:60, defending:80, composure:85, stamina:80, form:0.8, position:"DF", heading:75, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"格瓦迪奥尔", finishing:60, speed:80, passing:75, penalty:60, freeKick:55, aggression:75, defending:85, composure:82, stamina:90, form:0.85, position:"DF", heading:82, weakFoot:70, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
+      {name:"沃克", finishing:45, speed:92, passing:70, penalty:50, freeKick:40, aggression:80, defending:78, composure:80, stamina:85, form:0.8, position:"DF", heading:70, weakFoot:65, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"刘易斯", finishing:50, speed:82, passing:72, penalty:55, freeKick:45, aggression:65, defending:65, composure:75, stamina:78, form:0.7, position:"DF", heading:60, weakFoot:75, bigGame:0.4, foot:"right", isNationalTeamPlayer:false},
+      {name:"奥尔特加", finishing:30, speed:50, passing:55, penalty:30, freeKick:20, aggression:40, defending:20, composure:70, stamina:70, form:0.8, position:"GK", diving:85, handling:80, reflexes:82, rushing:70, communication:75},
+      {name:"埃德森", finishing:35, speed:55, passing:78, penalty:40, freeKick:25, aggression:45, defending:25, composure:85, stamina:75, form:0.9, position:"GK", diving:90, handling:88, reflexes:89, rushing:85, communication:90}
+    ],
+    substitutes: [
+      {name:"菲利普斯", finishing:65, speed:70, passing:75, penalty:65, freeKick:60, aggression:75, defending:70, composure:75, stamina:80, form:0.7, position:"MF"},
+      {name:"戈麦斯", finishing:55, speed:75, passing:68, penalty:55, freeKick:45, aggression:70, defending:75, composure:70, stamina:78, form:0.7, position:"DF"},
+      {name:"帕尔默", finishing:75, speed:80, passing:78, penalty:70, freeKick:68, aggression:65, defending:40, composure:80, stamina:75, form:0.8, position:"MF"}
+    ],
+    formation:"4-3-3",
+    city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)", xG:2.1, xGA:0.9, altitude:50,
+    injuries:["德布劳内(核心中场) 伤缺"], styleDesc:"高位逼抢,边路进攻", xgImpact:0.2, 
+    coach:{name:"瓜迪奥拉", style:"控球", aggression:0.7, defense:0.6, tacticFactor:1.1, possibleStyles:["控球","高位逼抢"]}
+  },
+  
+  // 利物浦
+  利物浦: {
+    power:94, attack:92, defend:89, home:1.10, away:0.92, homeWin:75, awayWin:62, recentForm:3,
+    players: [
+      {name:"萨拉赫", finishing:93, speed:90, passing:82, penalty:85, freeKick:70, aggression:65, defending:40, composure:90, stamina:85, form:0.9, position:"FW", heading:70, weakFoot:75, bigGame:0.9, foot:"left", isNationalTeamPlayer:true},
+      {name:"努涅斯", finishing:85, speed:88, passing:72, penalty:75, freeKick:60, aggression:80, defending:35, composure:75, stamina:88, form:0.85, position:"FW", heading:85, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"索博斯洛伊", finishing:82, speed:84, passing:86, penalty:78, freeKick:82, aggression:70, defending:55, composure:80, stamina:90, form:0.85, position:"MF", heading:65, weakFoot:80, bigGame:0.75, foot:"right", isNationalTeamPlayer:true},
+      {name:"麦卡利斯特", finishing:78, speed:75, passing:88, penalty:80, freeKick:75, aggression:75, defending:65, composure:85, stamina:88, form:0.85, position:"MF", heading:60, weakFoot:85, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"范迪克", finishing:50, speed:75, passing:70, penalty:60, freeKick:45, aggression:70, defending:94, composure:92, stamina:85, form:0.9, position:"DF", heading:92, weakFoot:65, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"阿利松", finishing:30, speed:50, passing:65, penalty:35, freeKick:20, aggression:45, defending:20, composure:92, stamina:75, form:0.9, position:"GK", diving:92, handling:90, reflexes:91, rushing:85, communication:88}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"利物浦", topScorer:"萨拉赫(19球)", topAssist:"阿诺德(10次)", xG:2.0, xGA:1.0, altitude:20,
+    injuries:[], styleDesc:"高位逼抢,快速反击", xgImpact:0,
+    coach:{name:"克洛普", style:"高位逼抢", aggression:0.8, defense:0.7, tacticFactor:1.2, possibleStyles:["高位逼抢","快速反击"]}
+  },
+  
+  // 阿森纳
+  阿森纳: {
+    power:93, attack:91, defend:88, home:1.08, away:0.93, homeWin:73, awayWin:60, recentForm:3,
+    players: [
+      {name:"萨卡", finishing:88, speed:89, passing:84, penalty:82, freeKick:75, aggression:70, defending:50, composure:85, stamina:88, form:0.9, position:"FW", heading:65, weakFoot:80, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
+      {name:"厄德高", finishing:80, speed:78, passing:90, penalty:75, freeKick:78, aggression:60, defending:55, composure:88, stamina:82, form:0.9, position:"MF", heading:50, weakFoot:85, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
+      {name:"赖斯", finishing:72, speed:75, passing:82, penalty:70, freeKick:60, aggression:80, defending:85, composure:88, stamina:92, form:0.9, position:"MF", heading:78, weakFoot:75, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
+      {name:"萨利巴", finishing:45, speed:78, passing:70, penalty:50, freeKick:40, aggression:75, defending:90, composure:88, stamina:85, form:0.9, position:"DF", heading:85, weakFoot:65, bigGame:0.8, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"伦敦", topScorer:"萨卡(16球)", topAssist:"厄德高(8次)", xG:1.9, xGA:1.1, altitude:20,
+    injuries:[], styleDesc:"控球,传控", xgImpact:0,
+    coach:{name:"阿尔特塔", style:"控球", aggression:0.6, defense:0.7, tacticFactor:1.1, possibleStyles:["控球","传控"]}
+  },
+  
+  // 切尔西
+  切尔西: {
+    power:92, attack:88, defend:87, home:1.09, away:0.91, homeWin:72, awayWin:58, recentForm:2,
+    players: [
+      {name:"帕尔默", finishing:85, speed:82, passing:86, penalty:88, freeKick:80, aggression:65, defending:45, composure:85, stamina:82, form:0.9, position:"MF", heading:55, weakFoot:85, bigGame:0.75, foot:"left", isNationalTeamPlayer:true},
+      {name:"恩佐", finishing:75, speed:70, passing:88, penalty:70, freeKick:72, aggression:75, defending:70, composure:82, stamina:88, form:0.85, position:"MF", heading:65, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"凯塞多", finishing:65, speed:72, passing:78, penalty:60, freeKick:55, aggression:82, defending:82, composure:78, stamina:90, form:0.85, position:"MF", heading:60, weakFoot:70, bigGame:0.75, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"伦敦", topScorer:"帕尔默(14球)", topAssist:"斯特林(7次)", xG:1.8, xGA:1.2, altitude:20,
+    injuries:[], styleDesc:"防守反击", xgImpact:0,
+    coach:{name:"波切蒂诺", style:"防守反击", aggression:0.6, defense:0.8, tacticFactor:1.0, possibleStyles:["防守反击"]}
+  },
+  
+  // 曼联
+  曼联: {
+    power:91, attack:87, defend:86, home:1.07, away:0.90, homeWin:70, awayWin:55, recentForm:2,
+    players: [
+      {name:"B费", finishing:82, speed:75, passing:89, penalty:85, freeKick:82, aggression:75, defending:55, composure:82, stamina:90, form:0.85, position:"MF", heading:65, weakFoot:80, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
+      {name:"拉什福德", finishing:85, speed:90, passing:75, penalty:70, freeKick:65, aggression:70, defending:40, composure:75, stamina:80, form:0.8, position:"FW", heading:70, weakFoot:70, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"霍伊伦", finishing:80, speed:85, passing:65, penalty:70, freeKick:50, aggression:75, defending:35, composure:70, stamina:82, form:0.8, position:"FW", heading:82, weakFoot:65, bigGame:0.7, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"曼彻斯特", topScorer:"B费(12球)", topAssist:"拉什福德(6次)", xG:1.7, xGA:1.3, altitude:50,
+    injuries:[], styleDesc:"快速反击", xgImpact:0,
+    coach:{name:"滕哈格", style:"快速反击", aggression:0.7, defense:0.6, tacticFactor:1.0, possibleStyles:["快速反击","控球"]}
+  },
+  
+  // 热刺
+  热刺: {
+    power:90, attack:89, defend:84, home:1.08, away:0.89, homeWin:71, awayWin:54, recentForm:2,
+    players: [
+      {name:"孙兴慜", finishing:90, speed:92, passing:80, penalty:82, freeKick:75, aggression:65, defending:40, composure:88, stamina:88, form:0.9, position:"FW", heading:75, weakFoot:85, bigGame:0.85, foot:"both", isNationalTeamPlayer:true},
+      {name:"麦迪逊", finishing:80, speed:78, passing:88, penalty:75, freeKick:80, aggression:65, defending:50, composure:85, stamina:82, form:0.85, position:"MF", heading:55, weakFoot:80, bigGame:0.75, foot:"right", isNationalTeamPlayer:true},
+      {name:"范德文", finishing:45, speed:88, passing:68, penalty:50, freeKick:40, aggression:70, defending:85, composure:80, stamina:85, form:0.85, position:"DF", heading:78, weakFoot:65, bigGame:0.7, foot:"left", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"伦敦", topScorer:"孙兴慜(17球)", topAssist:"麦迪逊(9次)", xG:1.9, xGA:1.2, altitude:20,
+    injuries:[], styleDesc:"高位逼抢,快速反击", xgImpact:0,
+    coach:{name:"波斯特科格鲁", style:"高位逼抢", aggression:0.8, defense:0.5, tacticFactor:1.1, possibleStyles:["高位逼抢"]}
+  },
+  
+  // 纽卡斯尔
+  纽卡斯尔: {
+    power:89, attack:85, defend:85, home:1.09, away:0.88, homeWin:69, awayWin:52, recentForm:2,
+    players: [
+      {name:"伊萨克", finishing:86, speed:85, passing:75, penalty:80, freeKick:70, aggression:65, defending:35, composure:80, stamina:78, form:0.85, position:"FW", heading:78, weakFoot:75, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"吉马良斯", finishing:72, speed:70, passing:85, penalty:68, freeKick:72, aggression:78, defending:75, composure:82, stamina:88, form:0.85, position:"MF", heading:65, weakFoot:75, bigGame:0.75, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"纽卡斯尔", topScorer:"伊萨克(15球)", topAssist:"特里皮尔(8次)", xG:1.8, xGA:1.2, altitude:80,
+    injuries:[], styleDesc:"强硬防守,快速反击", xgImpact:0,
+    coach:{name:"埃迪豪", style:"防守反击", aggression:0.6, defense:0.8, tacticFactor:1.0, possibleStyles:["防守反击"]}
+  },
+  
+  // 阿斯顿维拉
+  阿斯顿维拉: {
+    power:88, attack:86, defend:83, home:1.10, away:0.87, homeWin:68, awayWin:51, recentForm:2,
+    players: [
+      {name:"沃特金斯", finishing:85, speed:86, passing:72, penalty:75, freeKick:60, aggression:70, defending:40, composure:78, stamina:85, form:0.85, position:"FW", heading:80, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"麦金", finishing:75, speed:72, passing:82, penalty:70, freeKick:75, aggression:80, defending:65, composure:80, stamina:88, form:0.8, position:"MF", heading:60, weakFoot:75, bigGame:0.7, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-4-2",
+    city:"伯明翰", topScorer:"沃特金斯(16球)", topAssist:"麦金(7次)", xG:1.8, xGA:1.3, altitude:140,
+    injuries:[], styleDesc:"边路进攻,防守反击", xgImpact:0,
+    coach:{name:"埃梅里", style:"防守反击", aggression:0.6, defense:0.7, tacticFactor:1.1, possibleStyles:["防守反击","控球"]}
+  },
+  
+  // 布莱顿
+  布莱顿: {
+    power:87, attack:84, defend:82, home:1.06, away:0.88, homeWin:66, awayWin:50, recentForm:2,
+    players: [
+      {name:"三笘薰", finishing:82, speed:90, passing:78, penalty:70, freeKick:65, aggression:65, defending:45, composure:80, stamina:85, form:0.9, position:"FW", heading:60, weakFoot:80, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
+      {name:"格罗斯", finishing:72, speed:68, passing:85, penalty:75, freeKick:78, aggression:70, defending:70, composure:85, stamina:82, form:0.85, position:"MF", heading:65, weakFoot:80, bigGame:0.7, foot:"right", isNationalTeamPlayer:false}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"布莱顿", topScorer:"三笘薰(10球)", topAssist:"格罗斯(8次)", xG:1.7, xGA:1.3, altitude:10,
+    injuries:[], styleDesc:"控球,技术流", xgImpact:0,
+    coach:{name:"德泽尔比", style:"控球", aggression:0.5, defense:0.6, tacticFactor:1.1, possibleStyles:["控球"]}
+  },
+  
+  // 西汉姆联
+  西汉姆联: {
+    power:86, attack:82, defend:83, home:1.05, away:0.86, homeWin:65, awayWin:48, recentForm:2,
+    players: [
+      {name:"鲍文", finishing:82, speed:84, passing:75, penalty:75, freeKick:68, aggression:70, defending:45, composure:78, stamina:85, form:0.8, position:"FW", heading:70, weakFoot:70, bigGame:0.7, foot:"left", isNationalTeamPlayer:true},
+      {name:"帕奎塔", finishing:75, speed:70, passing:82, penalty:72, freeKick:75, aggression:75, defending:60, composure:80, stamina:82, form:0.8, position:"MF", heading:65, weakFoot:75, bigGame:0.7, foot:"both", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"伦敦", topScorer:"鲍文(12球)", topAssist:"帕奎塔(6次)", xG:1.6, xGA:1.3, altitude:20,
+    injuries:[], styleDesc:"身体对抗,防守反击", xgImpact:0,
+    coach:{name:"莫耶斯", style:"防守反击", aggression:0.5, defense:0.8, tacticFactor:0.9, possibleStyles:["防守反击"]}
+  },
+  
+  // 西甲球队
+  皇马: {
+    power:98, attack:96, defend:92, home:1.15, away:0.96, homeWin:80, awayWin:68, recentForm:3,
+    players: [
+      {name:"贝林厄姆", finishing:88, speed:85, passing:88, penalty:85, freeKick:75, aggression:75, defending:70, composure:92, stamina:92, form:0.95, position:"MF", heading:82, weakFoot:85, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
+      {name:"维尼修斯", finishing:90, speed:96, passing:78, penalty:75, freeKick:70, aggression:70, defending:35, composure:82, stamina:85, form:0.9, position:"FW", heading:65, weakFoot:80, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"姆巴佩", finishing:96, speed:98, passing:82, penalty:88, freeKick:75, aggression:70, defending:35, composure:90, stamina:90, form:0.95, position:"FW", heading:78, weakFoot:85, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
+      {name:"克罗斯", finishing:75, speed:65, passing:95, penalty:80, freeKick:92, aggression:60, defending:65, composure:95, stamina:80, form:0.9, position:"MF", heading:55, weakFoot:90, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"莫德里奇", finishing:72, speed:70, passing:94, penalty:75, freeKick:85, aggression:60, defending:60, composure:96, stamina:78, form:0.85, position:"MF", heading:50, weakFoot:92, bigGame:0.95, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"马德里", topScorer:"贝林厄姆(19球)", topAssist:"克罗斯(12次)", xG:2.3, xGA:0.8, altitude:650,
+    injuries:[], styleDesc:"控球,快速反击", xgImpact:0,
+    coach:{name:"安切洛蒂", style:"控球", aggression:0.6, defense:0.7, tacticFactor:1.1, possibleStyles:["控球","快速反击"]}
+  },
+  
+  巴萨: {
+    power:96, attack:94, defend:89, home:1.12, away:0.94, homeWin:78, awayWin:65, recentForm:3,
+    players: [
+      {name:"莱万", finishing:95, speed:80, passing:78, penalty:92, freeKick:82, aggression:70, defending:35, composure:92, stamina:82, form:0.9, position:"FW", heading:90, weakFoot:85, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
+      {name:"佩德里", finishing:72, speed:75, passing:90, penalty:65, freeKick:70, aggression:60, defending:55, composure:88, stamina:80, form:0.9, position:"MF", heading:50, weakFoot:85, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"京多安", finishing:78, speed:70, passing:89, penalty:80, freeKick:78, aggression:65, defending:60, composure:88, stamina:82, form:0.85, position:"MF", heading:55, weakFoot:85, bigGame:0.8, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"巴塞罗那", topScorer:"莱万(20球)", topAssist:"佩德里(8次)", xG:2.1, xGA:1.0, altitude:12,
+    injuries:[], styleDesc:"传控,技术流", xgImpact:0,
+    coach:{name:"哈维", style:"控球", aggression:0.6, defense:0.6, tacticFactor:1.1, possibleStyles:["控球"]}
+  },
+  
+  马竞: {
+    power:93, attack:88, defend:92, home:1.14, away:0.91, homeWin:76, awayWin:60, recentForm:2,
+    players: [
+      {name:"格列兹曼", finishing:88, speed:82, passing:86, penalty:85, freeKick:82, aggression:70, defending:55, composure:88, stamina:85, form:0.9, position:"FW", heading:70, weakFoot:85, bigGame:0.85, foot:"left", isNationalTeamPlayer:true},
+      {name:"莫拉塔", finishing:82, speed:80, passing:68, penalty:75, freeKick:60, aggression:75, defending:45, composure:75, stamina:80, form:0.8, position:"FW", heading:85, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-4-2",
+    city:"马德里", topScorer:"格列兹曼(15球)", topAssist:"略伦特(6次)", xG:1.8, xGA:0.9, altitude:650,
+    injuries:[], styleDesc:"强硬防守,快速反击", xgImpact:0,
+    coach:{name:"西蒙尼", style:"防守反击", aggression:0.8, defense:0.9, tacticFactor:1.1, possibleStyles:["防守反击"]}
+  },
+  
+  // 德甲球队
+  拜仁: {
+    power:97, attack:96, defend:90, home:1.16, away:0.95, homeWin:82, awayWin:70, recentForm:3,
+    players: [
+      {name:"凯恩", finishing:96, speed:80, passing:85, penalty:95, freeKick:85, aggression:70, defending:40, composure:94, stamina:88, form:0.95, position:"FW", heading:92, weakFoot:90, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
+      {name:"穆西亚拉", finishing:85, speed:88, passing:88, penalty:75, freeKick:78, aggression:65, defending:45, composure:88, stamina:85, form:0.9, position:"MF", heading:60, weakFoot:85, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
+      {name:"萨内", finishing:84, speed:92, passing:80, penalty:70, freeKick:75, aggression:65, defending:40, composure:78, stamina:82, form:0.85, position:"FW", heading:60, weakFoot:80, bigGame:0.7, foot:"left", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"慕尼黑", topScorer:"凯恩(25球)", topAssist:"穆西亚拉(10次)", xG:2.4, xGA:0.9, altitude:520,
+    injuries:[], styleDesc:"控球,高位逼抢", xgImpact:0,
+    coach:{name:"图赫尔", style:"控球", aggression:0.7, defense:0.7, tacticFactor:1.1, possibleStyles:["控球","高位逼抢"]}
+  },
+  
+  多特蒙德: {
+    power:92, attack:90, defend:85, home:1.13, away:0.90, homeWin:75, awayWin:58, recentForm:2,
+    players: [
+      {name:"罗伊斯", finishing:85, speed:82, passing:86, penalty:82, freeKick:85, aggression:65, defending:45, composure:88, stamina:75, form:0.85, position:"FW", heading:65, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"布兰特", finishing:78, speed:75, passing:85, penalty:70, freeKick:75, aggression:60, defending:50, composure:82, stamina:80, form:0.85, position:"MF", heading:55, weakFoot:80, bigGame:0.7, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-2-3-1",
+    city:"多特蒙德", topScorer:"菲尔克鲁格(16球)", topAssist:"布兰特(8次)", xG:2.0, xGA:1.2, altitude:85,
+    injuries:[], styleDesc:"快速反击,年轻化", xgImpact:0,
+    coach:{name:"泰尔齐奇", style:"快速反击", aggression:0.7, defense:0.6, tacticFactor:1.0, possibleStyles:["快速反击"]}
+  },
+  
+  // 意甲球队
+  国际米兰: {
+    power:94, attack:90, defend:89, home:1.12, away:0.92, homeWin:77, awayWin:63, recentForm:3,
+    players: [
+      {name:"劳塔罗", finishing:90, speed:85, passing:75, penalty:85, freeKick:70, aggression:80, defending:45, composure:85, stamina:88, form:0.9, position:"FW", heading:78, weakFoot:75, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
+      {name:"恰尔汗奥卢", finishing:80, speed:70, passing:88, penalty:90, freeKick:92, aggression:65, defending:55, composure:88, stamina:85, form:0.9, position:"MF", heading:55, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"3-5-2",
+    city:"米兰", topScorer:"劳塔罗(23球)", topAssist:"迪马尔科(7次)", xG:2.0, xGA:0.9, altitude:122,
+    injuries:[], styleDesc:"防守反击,三后卫", xgImpact:0,
+    coach:{name:"小因扎吉", style:"防守反击", aggression:0.6, defense:0.8, tacticFactor:1.0, possibleStyles:["防守反击"]}
+  },
+  
+  AC米兰: {
+    power:92, attack:89, defend:87, home:1.10, away:0.91, homeWin:74, awayWin:60, recentForm:2,
+    players: [
+      {name:"莱奥", finishing:86, speed:94, passing:78, penalty:75, freeKick:70, aggression:70, defending:40, composure:78, stamina:82, form:0.85, position:"FW", heading:70, weakFoot:75, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
+      {name:"特奥", finishing:70, speed:92, passing:78, penalty:70, freeKick:68, aggression:75, defending:75, composure:80, stamina:90, form:0.9, position:"DF", heading:72, weakFoot:70, bigGame:0.8, foot:"left", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"米兰", topScorer:"莱奥(15球)", topAssist:"特奥(7次)", xG:1.9, xGA:1.1, altitude:122,
+    injuries:[], styleDesc:"快速反击,边路进攻", xgImpact:0,
+    coach:{name:"皮奥利", style:"快速反击", aggression:0.7, defense:0.6, tacticFactor:1.0, possibleStyles:["快速反击"]}
+  },
+  
+  尤文图斯: {
+    power:91, attack:86, defend:90, home:1.11, away:0.89, homeWin:73, awayWin:57, recentForm:2,
+    players: [
+      {name:"弗拉霍维奇", finishing:88, speed:80, passing:68, penalty:82, freeKick:70, aggression:75, defending:40, composure:78, stamina:82, form:0.85, position:"FW", heading:88, weakFoot:70, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
+      {name:"基耶萨", finishing:82, speed:90, passing:75, penalty:70, freeKick:72, aggression:70, defending:45, composure:80, stamina:85, form:0.85, position:"FW", heading:60, weakFoot:75, bigGame:0.8, foot:"right", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"3-5-2",
+    city:"都灵", topScorer:"弗拉霍维奇(16球)", topAssist:"科斯蒂奇(6次)", xG:1.7, xGA:1.0, altitude:239,
+    injuries:[], styleDesc:"防守反击,强硬防守", xgImpact:0,
+    coach:{name:"阿莱格里", style:"防守反击", aggression:0.5, defense:0.9, tacticFactor:1.0, possibleStyles:["防守反击"]}
+  },
+  
+  // 法甲球队
+  巴黎圣日耳曼: {
+    power:95, attack:95, defend:86, home:1.13, away:0.93, homeWin:79, awayWin:66, recentForm:3,
+    players: [
+      {name:"姆巴佩", finishing:96, speed:98, passing:82, penalty:88, freeKick:75, aggression:70, defending:35, composure:90, stamina:90, form:0.95, position:"FW", heading:78, weakFoot:85, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
+      {name:"登贝莱", finishing:82, speed:94, passing:78, penalty:70, freeKick:72, aggression:65, defending:35, composure:70, stamina:75, form:0.8, position:"FW", heading:55, weakFoot:85, bigGame:0.7, foot:"both", isNationalTeamPlayer:true}
+    ],
+    substitutes: [],
+    formation:"4-3-3",
+    city:"巴黎", topScorer:"姆巴佩(26球)", topAssist:"登贝莱(8次)", xG:2.3, xGA:1.1, altitude:35,
+    injuries:[], styleDesc:"快速反击,个人能力", xgImpact:0,
+    coach:{name:"恩里克", style:"控球", aggression:0.6, defense:0.5, tacticFactor:1.0, possibleStyles:["控球"]}
+  },
+  
+  // 其他球队默认数据（如果没有详细数据，使用这个默认配置）
+  默认球队: function(name) {
+    return {
+      power:75, attack:70, defend:70, home:1.0, away:1.0, homeWin:48, awayWin:38, recentForm:1,
+      players: [
+        {name:name+"前锋", finishing:68, speed:68, passing:62, penalty:58, freeKick:52, aggression:62, defending:35, composure:62, stamina:68, form:0.7, position:"FW", heading:62, weakFoot:62, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
+        {name:name+"中场", finishing:58, speed:62, passing:68, penalty:54, freeKick:58, aggression:62, defending:58, composure:62, stamina:72, form:0.7, position:"MF", heading:54, weakFoot:62, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
+        {name:name+"后卫", finishing:45, speed:58, passing:54, penalty:48, freeKick:45, aggression:68, defending:68, composure:62, stamina:68, form:0.7, position:"DF", heading:65, weakFoot:58, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
+        {name:name+"门将", finishing:30, speed:40, passing:45, penalty:35, freeKick:25, aggression:40, defending:20, composure:62, stamina:65, form:0.7, position:"GK", diving:68, handling:65, reflexes:68, rushing:58, communication:62}
+      ],
+      substitutes: [],
+      formation:"4-4-2",
+      city:name+"市", topScorer:name+"前锋(5球)", topAssist:name+"中场(3次)", xG:1.3, xGA:1.4, altitude:50,
+      injuries:[], styleDesc:"均衡战术", xgImpact:0,
+      coach:{name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"]}
     };
-    tab.appendChild(div);
   }
+};
+
+// ==================== 修复：getTeam 函数，若球队不存在则返回默认数据 ====================
+function getTeam(name) {
+  if (isCustom) {
+    // 使用之前设置的自定义球员列表
+    return {
+      power:75, attack:70, defend:70, home:1.0, away:1.0, homeWin:48, awayWin:38, recentForm:1,
+      players: customHomePlayers.length ? customHomePlayers : [{name:"未知球员", finishing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW"}],
+      substitutes: [], city:"未知", topScorer:"未知", topAssist:"未知", altitude:0,
+      xG:1.3, xGA:1.4, injuries:[], styleDesc:"未知", xgImpact:0, 
+      coach:{name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"]}
+    };
+  }
+  
+  // 如果teamData中有该球队，返回其数据
+  if (teamData[name] && typeof teamData[name] !== 'function') {
+    let team = teamData[name];
+    // 确保教练存在
+    if (!team.coach) team.coach = { name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"] };
+    // 确保球员对象完整
+    if (team.players && team.players.length > 0 && typeof team.players[0] === 'string') {
+      team.players = team.players.map(p => ({
+        name:p, finishing:70, speed:70, passing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false
+      }));
+    }
+    // 过滤停赛球员
+    if (team.players) {
+      team.players = team.players.filter(p => {
+        let key = `${name}_${p.name}`;
+        return !playerFatigue[key]?.suspended;
+      });
+    }
+    initElo(name);
+    team.power = teamMu[name] || 1500;
+    // 计算球队化学
+    team.chemistry = computeTeamChemistry(name, team.players || []);
+    return team;
+  }
+  
+  // 如果找不到球队，返回默认数据
+  console.warn(`球队 ${name} 数据不存在，使用默认数据`);
+  return teamData.默认球队(name);
 }
-loadSeasons();
 
-document.querySelectorAll("#leagueList .league-item").forEach(e=>{
-  e.onclick=()=>{
-    document.querySelectorAll("#leagueList .league-item").forEach(x=>x.classList.remove("active"));
-    e.classList.add("active"); league = e.innerText; isCustom=false;
-    document.getElementById("homeTeam").disabled = false;
-    document.getElementById("awayTeam").disabled = false;
-    document.getElementById("matchInfo").innerText = "未选择球队";
-    document.getElementById("leagueNote").innerText = leagueAttr[league]?.note || `${league} 数据加载中`;
-    loadTeam();
-    fetchRealData();
-  }
-});
+// 修复：为 teamData 添加默认球队生成器（已定义在上方）
 
-// ==================== 修复 loadTeam：确保无论如何都有球队选项 ====================
+// 修复 loadTeam 函数：确保选择框正确加载
 function loadTeam() {
   try {
     let h = document.getElementById("homeTeam");
@@ -1154,54 +1354,36 @@ function loadTeam() {
     } else {
       console.warn(`联赛 ${league} 没有球队数据，使用默认英超球队`);
       // 保底：使用英超球队
-      teamList = teams["英超"]["2025-2026"] || ["曼城","利物浦","切尔西","曼联","阿森纳","热刺"];
+      teamList = teams["英超"]["2025-2026"] || ["曼城","利物浦","切尔西","曼联","阿森纳","热刺","纽卡斯尔","布莱顿","阿斯顿维拉","西汉姆联"];
     }
     
     // 如果还是空，硬编码最后保底
     if (teamList.length === 0) {
-      teamList = ["曼城","利物浦","切尔西","曼联","阿森纳","热刺"];
+      teamList = ["曼城","利物浦","切尔西","曼联","阿森纳","热刺","拜仁","皇马","巴萨","巴黎圣日耳曼"];
     }
     
+    // 去重并排序
+    teamList = [...new Set(teamList)].sort();
+    
     teamList.forEach(team => {
-      h.innerHTML += `<option value="${team}">${team}</option>`;
-      a.innerHTML += `<option value="${team}">${team}</option>`;
+      if (team) {
+        h.innerHTML += `<option value="${team}">${team}</option>`;
+        a.innerHTML += `<option value="${team}">${team}</option>`;
+      }
     });
     
-    console.log(`已加载 ${league} 球队：`, teamList);
+    console.log(`已加载 ${league} 球队，共 ${teamList.length} 支：`, teamList);
   } catch (e) {
     console.error("loadTeam 出错", e);
     // 极端保底：手动添加
     const h = document.getElementById("homeTeam");
     const a = document.getElementById("awayTeam");
-    if (h) h.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option>";
-    if (a) a.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option>";
+    if (h) h.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option><option value='曼联'>曼联</option><option value='阿森纳'>阿森纳</option><option value='热刺'>热刺</option>";
+    if (a) a.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option><option value='曼联'>曼联</option><option value='阿森纳'>阿森纳</option><option value='热刺'>热刺</option>";
   }
 }
 
-function getTeam(name){
-  if (isCustom) {
-    return {power:80+Math.random()*16, attack:78+Math.random()*12, defend:78+Math.random()*12, style:1, home:1.05, away:0.97, homeWin:55, awayWin:45, recentForm:0, 
-            players: customHomePlayers, substitutes:[], city:"未知", topScorer:"未知", topAssist:"未知", altitude:0,
-            xG:1.5, xGA:1.5, injuries:[], styleDesc:"未知", xgImpact:0, 
-            coach:{name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"]}};
-  }
-  let team = teamData[name] || {power:75, attack:70, defend:70, style:1, home:1.0, away:1.0, homeWin:50, awayWin:40, recentForm:0, players:["未知"], substitutes:[], city:"伦敦", topScorer:"未知", topAssist:"未知", altitude:0, xG:1.4, xGA:1.4, injuries:[], styleDesc:"未知", xgImpact:0, coach:{name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"]}};
-  if (!team.coach) team.coach = { name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"] };
-  if (team.players && typeof team.players[0] === 'string') {
-    team.players = team.players.map(p => ({name:p, finishing:70, speed:70, passing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false}));
-  }
-  if (team.players) {
-    team.players = team.players.filter(p => {
-      let key = `${name}_${p.name}`;
-      return !playerFatigue[key]?.suspended;
-    });
-  }
-  initElo(name);
-  team.power = teamMu[name] || 1500;
-  // 计算球队化学
-  team.chemistry = computeTeamChemistry(name, team.players);
-  return team;
-}
+// 获取主队名称（优先使用自定义）
 function getHomeName(){ return isCustom ? customHome : document.getElementById("homeTeam").value; }
 function getAwayName(){ return isCustom ? customAway : document.getElementById("awayTeam").value; }
 
@@ -1711,7 +1893,10 @@ async function startAI(){
     let tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     updateCountdown(tomorrow);
 
-  } catch(e){ showToast("预测失败"); } finally { hideLoading(); }
+  } catch(e){ 
+    console.error("预测失败", e);
+    showToast("预测失败，请重试"); 
+  } finally { hideLoading(); }
 }
 
 function getHalf(win,draw,lose){
@@ -1819,7 +2004,7 @@ function getShotRegion() {
 
 let shotRecords = { home: [], away: [] };
 
-// ==================== 增强的模拟比赛（集成所有新特性）====================
+// ==================== 增强的模拟比赛（集成所有新特性，修复传球率计算和红牌同步）====================
 function startSim() {
   let hn = getHomeName(); let an = getAwayName();
   if (!hn || !an || hn == an) { showToast("请选择有效球队"); return; }
@@ -1852,7 +2037,9 @@ function startSim() {
   let hSave = 0, aSave = 0, hAssist = 0, aAssist = 0;
   let hWood = 0, aWood = 0, hSub = 0, aSub = 0;
   let hFoul = 0, aFoul = 0;
-  let hPass = 85, aPass = 82;
+  // 初始化传球率，并应用化学系数（只应用一次，避免指数漂移）
+  let hPass = 85 * (h.chemistry || 1.0);
+  let aPass = 82 * (a.chemistry || 1.0);
   let hDist = 105, aDist = 103;
   let hBall = Math.min(70, Math.max(30, 50 + ((teamMu[hn]||1500) - (teamMu[an]||1500))/50));
   let aBall = 100 - hBall;
@@ -1990,10 +2177,6 @@ function startSim() {
     if (h.altitude > 1000) awayEnergy.forEach((e,i) => awayEnergy[i] -= 0.1);
     if (a.altitude > 1000) homeEnergy.forEach((e,i) => homeEnergy[i] -= 0.1);
 
-    // 球队化学影响传球
-    hPass *= (h.chemistry || 1.0);
-    aPass *= (a.chemistry || 1.0);
-
     // 使用泊松回归计算 λ（与预测一致），weatherAdjust 在外部计算后传入
     let featuresHome = buildFeatures(hn, an, h, a, lg, weatherAdjust, ref);
     let featuresAway = buildFeatures(an, hn, a, h, lg, weatherAdjust, ref);
@@ -2066,10 +2249,11 @@ function startSim() {
       awayEnergy.forEach((e,i) => awayEnergy[i] -= 0.5);
     }
     if (h.coach.style === "控球") {
-      hPass *= h.coach.tacticFactor || 1.02;
+      // 控球风格影响传球率（加法调整，避免指数）
+      hPass += 0.5;
     }
     if (a.coach.style === "控球") {
-      aPass *= a.coach.tacticFactor || 1.02;
+      aPass += 0.5;
     }
 
     if (min % 1 === 0) {
@@ -2124,29 +2308,35 @@ function startSim() {
         event = `${displayMin.toFixed(2)}′ ${team} 任意球被扑出/打高`;
       }
     }
-    // 红牌
+    // 红牌（修复：同步移除球员和能量）
     else if (rand < 0.02 * (1 + ref.redAvg) && min > 15 && !varPending) {
       updateInjuryTime(30);
       if (Math.random() < 0.5 - ref.homeBias) { 
         hRed++; 
-        let injuredPlayer = homePlayers[Math.floor(Math.random()*homePlayers.length)];
-        event = `🔴 ${displayMin.toFixed(2)}′ ${hn} ${injuredPlayer.name} 被红牌罚下！`; 
+        let injuredIndex = Math.floor(Math.random() * homePlayers.length);
+        let injuredPlayer = homePlayers[injuredIndex];
+        let key = `${hn}_${injuredPlayer.name}`;
+        playerFatigue[key] = { ...playerFatigue[key], suspended: true };
+        localStorage.setItem('playerFatigue', JSON.stringify(playerFatigue));
+        event = `🔴 ${displayMin.toFixed(2)}′ ${hn} ${injuredPlayer.name} 被红牌罚下！`;
         if (Math.random() < 0.3) {
           event += ` 受伤离场！`;
-          homePlayers = homePlayers.filter(p => p.name !== injuredPlayer.name);
-        } else {
-          homePlayers = homePlayers.filter(p => p.name !== injuredPlayer.name);
         }
+        homePlayers.splice(injuredIndex, 1);
+        homeEnergy.splice(injuredIndex, 1);
       } else { 
         aRed++; 
-        let injuredPlayer = awayPlayers[Math.floor(Math.random()*awayPlayers.length)];
-        event = `🔴 ${displayMin.toFixed(2)}′ ${an} ${injuredPlayer.name} 被红牌罚下！`; 
+        let injuredIndex = Math.floor(Math.random() * awayPlayers.length);
+        let injuredPlayer = awayPlayers[injuredIndex];
+        let key = `${an}_${injuredPlayer.name}`;
+        playerFatigue[key] = { ...playerFatigue[key], suspended: true };
+        localStorage.setItem('playerFatigue', JSON.stringify(playerFatigue));
+        event = `🔴 ${displayMin.toFixed(2)}′ ${an} ${injuredPlayer.name} 被红牌罚下！`;
         if (Math.random() < 0.3) {
           event += ` 受伤离场！`;
-          awayPlayers = awayPlayers.filter(p => p.name !== injuredPlayer.name);
-        } else {
-          awayPlayers = awayPlayers.filter(p => p.name !== injuredPlayer.name);
         }
+        awayPlayers.splice(injuredIndex, 1);
+        awayEnergy.splice(injuredIndex, 1);
       }
     }
     // 黄牌（累积，考虑裁判背后铲球严厉度）
@@ -2407,7 +2597,7 @@ function showPostMatchStats(hn, an, homePlayers, awayPlayers, hBall, hShotOnTarg
   document.getElementById("ratingCard").style.display = "block";
 }
 
-// 修复：增加 isCup 参数，并移除内部未定义的 isCup 引用
+// 点球大战（修复 isCup 参数传递）
 function simulatePenaltyShootoutWithAbility(hn, an, homePlayers, awayPlayers, hBall, hShotOnTarget, aShotOnTarget, hFoul, aFoul, isCup) {
   let homeScore = 0, awayScore = 0;
   let rounds = 5;
@@ -2446,7 +2636,6 @@ function simulatePenaltyShootoutWithAbility(hn, an, homePlayers, awayPlayers, hB
   document.getElementById("simEvent").innerText = `点球大战结束！${winner} 获胜 (${homeScore}-${awayScore})`;
   generateMatchNews(hn, an, homePlayers, awayPlayers, homeScore, awayScore);
   showPostMatchStats(hn, an, homePlayers, awayPlayers, hBall, hShotOnTarget, aShotOnTarget, hFoul, aFoul, homeScore, awayScore, `点球 ${homeScore}-${awayScore}`);
-  let result = homeScore > awayScore ? 'home' : (awayScore > homeScore ? 'away' : 'draw');
   // 使用贝叶斯更新
   bayesianUpdate(hn, an, homeScore, awayScore);
   updatePlayerFatigue(homePlayers, hn, 10);
@@ -2580,6 +2769,98 @@ document.ontouchmove = null; window.ontouchmove = null;
 loadTeam();
 fetchRealData();
 renderHistory();
+
+// 社交媒体情绪模拟
+async function fetchSocialMentions(team) {
+  return Math.floor(Math.random() * 10000) + 5000;
+}
+
+// 伤病动态更新（模拟）
+async function fetchInjuries(team) {
+  let injuries = [];
+  if (Math.random() < 0.2) {
+    injuries.push(`${team.players[Math.floor(Math.random()*team.players.length)].name} 轻伤`);
+  }
+  return injuries;
+}
+
+// 机器学习权重（可从外部JSON加载）
+let mlWeights = {
+  eloDiff: 0.35,
+  homeAdv: 0.2,
+  formDiff: 0.15,
+  injuryImpact: 0.05,
+  weatherImpact: 0.03,
+  h2hAdv: 0.12
+};
+
+// 获取重要性因子
+function getImportanceFactor(homeTeam, awayTeam, lg) {
+  if (lg.isCup) return 1.2;
+  return parseFloat(document.getElementById('importanceWeight').value);
+}
+
+// 修复自定义球队功能：生成完整的默认球队对象
+function useCustomTeam() {
+  let h = document.getElementById("customHome").value.trim();
+  let a = document.getElementById("customAway").value.trim();
+  if (!h || !a) { showToast("请输入主队和客队名称"); return; }
+  customHome = h; customAway = a; isCustom = true;
+
+  // 生成完整的默认球队对象，并替换球员列表
+  let defaultHome = teamData.默认球队(h);
+  let defaultAway = teamData.默认球队(a);
+  customHomePlayers = defaultHome.players;
+  customAwayPlayers = defaultAway.players;
+
+  document.getElementById("matchInfo").innerText = `已启用手写：${h} vs ${a}`;
+  document.getElementById("homeTeam").innerHTML = "<option>已使用手写球队</option>";
+  document.getElementById("awayTeam").innerHTML = "<option>已使用手写球队</option>";
+  document.getElementById("homeTeam").disabled = true;
+  document.getElementById("awayTeam").disabled = true;
+  document.getElementById("leagueNote").innerText = "自定义球队：通用联赛风格";
+}
+
+// 修复 getAwayAdaptation 使用 getTeam
+function getAwayAdaptation(team) {
+  let teamObj = getTeam(team);
+  let awayWinRate = teamObj.awayWin / 100;
+  return awayWinRate / 0.3; // 范围约 0.7-1.3
+}
+
+// 为 fetchRealData 等提供 teams 变量
+const teams = {
+  英超: {"2025-2026": ["曼城","阿森纳","利物浦","切尔西","曼联","热刺","纽卡斯尔","布莱顿","西汉姆联","阿斯顿维拉","狼队","埃弗顿","富勒姆","布伦特福德","水晶宫","诺丁汉森林","伯恩茅斯","谢菲尔德联","卢顿"]},
+  西甲: {"2025-2026": ["皇马","巴萨","马竞","塞维利亚","皇家社会","比利亚雷亚尔","毕尔巴鄂","贝蒂斯","奥萨苏纳","赫罗纳","巴列卡诺","马洛卡","加的斯","阿尔梅里亚","塞尔塔","巴伦西亚","赫塔费","西班牙人","埃尔切"]},
+  德甲: {"2025-2026": ["拜仁","多特蒙德","莱比锡","勒沃库森","柏林联合","弗赖堡","沃尔夫斯堡","门兴","法兰克福","科隆","美因茨","霍芬海姆","波鸿","奥格斯堡","斯图加特","不莱梅","沙尔克04","柏林赫塔"]},
+  意甲: {"2025-2026": ["尤文图斯","国际米兰","AC米兰","那不勒斯","罗马","拉齐奥","亚特兰大","佛罗伦萨","都灵","博洛尼亚","乌迪内斯","恩波利","萨索洛","莱切","斯佩齐亚","桑普多利亚","维罗纳","蒙扎"]},
+  法甲: {"2025-2026": ["巴黎圣日耳曼","马赛","摩纳哥","里尔","雷恩","尼斯","朗斯","里昂","图卢兹","洛里昂","欧塞尔","特鲁瓦","布雷斯特","阿雅克肖","昂热","克莱蒙","蒙彼利埃","南特"]},
+  中超: {"2025-2026": ["上海海港","山东泰山","广州队","北京国安","上海申花","成都蓉城","浙江队","武汉三镇","长春亚泰","天津津门虎","深圳队","青岛海牛","南通支云","沧州雄狮","河南嵩山龙门","梅州客家"]},
+  欧冠: {"2025-2026": ["皇马","拜仁","曼城","利物浦","巴黎","AC米兰","国米","切尔西","巴萨","多特","尤文","那不勒斯","马竞","莱比锡","本菲卡","波尔图","阿贾克斯","顿涅茨克矿工","萨尔茨堡","凯尔特人"]},
+  葡超: {"2025-2026": ["本菲卡","波尔图","葡萄牙体育","布拉加","吉马良斯","莫雷伦斯","法马利康","埃斯托里尔","维泽拉","阿罗卡","博阿维斯塔","马里迪莫","查维斯","圣克拉拉","通德拉","费雷拉"]},
+  荷甲: {"2025-2026": ["阿贾克斯","埃因霍温","费耶诺德","阿尔克马尔","特温特","乌得勒支","海伦芬","维特斯","奈梅亨","福伦丹","埃门","坎布尔","瓦尔韦克","前进之鹰","格罗宁根","福图纳"]},
+  苏超: {"2025-2026": ["凯尔特人","流浪者","哈茨","阿伯丁","利文斯顿","希伯尼安","邓迪联","圣米伦","马瑟韦尔","罗斯郡","基尔马诺克","圣约翰斯通"]},
+  巴甲: {"2025-2026": ["帕尔梅拉斯","弗拉门戈","科林蒂安","圣保罗","米内罗竞技","巴西国际","格雷米奥","弗鲁米嫩塞","博塔弗戈","桑托斯","巴拉纳竞技","塞阿拉","福塔雷萨","巴伊亚","戈亚斯","阿瓦伊","库亚巴","尤文图德"]},
+  阿甲: {"2025-2026": ["博卡青年","河床","竞技","拉普拉塔大学生","圣洛伦索","国防与司法","阿根廷独立","罗萨里奥中央","拉努斯","戈多伊克鲁斯","科隆竞技","阿尔多希维","兵工厂","班菲尔德","纽维尔老男孩","萨兰迪兵工厂"]},
+  J联赛: {"2025-2026": ["川崎前锋","横滨水手","神户胜利船","鹿岛鹿角","名古屋鲸鱼","广岛三箭","大阪樱花","鸟栖砂岩","札幌冈萨多","福冈黄蜂","柏太阳神","东京FC","大阪钢巴","清水鼓动","湘南海洋","新潟天鹅","京都不死鸟","横滨FC","甲府风林"]},
+  K联赛: {"2025-2026": ["全北现代","蔚山现代","浦项制铁","水原三星","首尔FC","大邱FC","济州联","仁川联","江原FC","城南FC","光州FC","金泉尚武"]},
+  英冠: {"2025-2026": ["伯恩利","谢菲联","米德尔斯堡","布莱克本","诺维奇","沃特福德","西布朗","斯托克城","普雷斯顿","米尔沃尔","考文垂","加的夫城","哈德斯菲尔德","赫尔城","布里斯托城","雷丁","伯明翰","女王公园巡游者","斯旺西","卢顿"]},
+  英甲: {"2025-2026": ["谢周三","伊普斯维奇","普利茅斯","彼得堡联","博尔顿","朴茨茅斯","牛津联","查尔顿","威科姆","林肯城","切尔滕汉姆","莫克姆","阿克灵顿","伯顿","剑桥联","弗利特伍德","什鲁斯伯里","埃克塞特城"]},
+  西乙: {"2025-2026": ["拉斯帕尔马斯","格拉纳达","莱万特","阿拉维斯","埃瓦尔","马拉加","特内里费","奥维耶多","萨拉戈萨","卡塔赫纳","阿尔瓦塞特","希洪","蓬费拉迪纳","卢戈","米兰德斯","安道尔","韦斯卡","伊维萨"]},
+  意乙: {"2025-2026": ["弗罗西诺内","热那亚","巴里","帕尔马","比萨","南蒂罗尔","雷吉纳","贝内文托","卡利亚里","科莫","摩德纳","特尔纳纳","奇塔代拉","科森扎","阿斯科利","威尼斯","帕多瓦","斯帕尔"]},
+  德乙: {"2025-2026": ["汉堡","达姆施塔特","海登海姆","帕德博恩","圣保利","杜塞尔多夫","卡尔斯鲁厄","基尔","纽伦堡","汉诺威","罗斯托克","比勒费尔德","马格德堡","不伦瑞克","雷根斯堡","菲尔特","奥厄","凯泽斯劳滕"]},
+  法乙: {"2025-2026": ["圣埃蒂安","波尔多","梅斯","勒阿弗尔","巴斯蒂亚","索肖","甘冈","卡昂","亚眠","奎维利鲁昂","尼奥尔","罗德兹","瓦朗谢讷","巴黎FC","拉瓦勒","昂纳西","第戎","尼姆"]},
+  葡甲: {"2025-2026": ["法伦斯","本菲卡B队","波尔图B队","科维良","马夫拉","佩纳菲耶尔","奥利韦伦斯","维拉弗兰昆森","阿马多拉","泰罗芬斯","雷克斯欧斯","卡萨皮亚","维塞乌","莱里亚","费伦斯"]},
+  荷乙: {"2025-2026": ["阿尔克马尔青年队","阿贾克斯青年队","埃因霍温青年队","乌得勒支青年队","特尔斯达","马斯特里赫特","芬洛","多德勒支","罗达JC","奥斯","海牙","布雷达","阿尔梅勒城","登博斯","赫尔蒙德","格拉夫夏普"]},
+  俄超: {"2025-2026": ["圣彼得堡泽尼特","莫斯科中央陆军","莫斯科迪纳摩","莫斯科斯巴达","克拉斯诺达尔","罗斯托夫","索契","乌拉尔","阿克伦托利亚蒂","希姆基","奥伦堡","诺夫哥罗德","沃罗涅日火炬","莫斯科火车头"]},
+  土超: {"2025-2026": ["加拉塔萨雷","费内巴切","贝西克塔斯","特拉布宗体育","代米尔体育","科尼亚体育","开塞利体育","安塔利亚体育","阿拉尼亚体育","锡瓦斯体育","伊斯坦布尔","卡拉京吕克成功","吉雷森体育","哈塔伊体育"]},
+  美职联: {"2025-2026": ["洛杉矶FC","迈阿密国际","纽约城","芝加哥火焰","西雅图海湾人","亚特兰大联","波特兰伐木者","哥伦布机员","费城联合","华盛顿联","多伦多FC","堪萨斯城","达拉斯FC","洛杉矶银河","科罗拉多急流"]},
+  比甲: {"2025-2026": ["布鲁日","安德莱赫特","标准列日","根特","安特卫普","亨克","沙勒罗瓦","梅赫伦","圣图尔登","奥斯坦德","瓦勒海姆","欧本","塞里辛","科特赖克"]},
+  奥超: {"2025-2026": ["萨尔茨堡红牛","维也纳快速","格拉茨风暴","林茨","奥地利维也纳","沃尔夫斯贝格","阿尔塔奇","里德","哈特贝格","瓦滕斯"]},
+  瑞士超: {"2025-2026": ["伯尔尼年轻人","巴塞尔","苏黎世","圣加仑","塞尔维特","锡永","卢塞恩","洛桑体育","卢加诺","温特图尔"]},
+  丹超: {"2025-2026": ["哥本哈根","中日德兰","布隆德比","奥尔堡","奥胡斯","北西兰","兰德斯","欧登塞","瓦埃勒","霍森斯","灵比","锡尔克堡"]}
+};
+
 </script>
 </body>
   </html>
