@@ -14,7 +14,7 @@
 <!-- 引入 Sortable 用于阵容拖拽 -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <style>
-/* 样式与之前完全一致，为节省篇幅此处略，实际使用时保留完整样式 */
+/* 样式与之前完全一致，确保联赛标签可滑动 */
 *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
 html,body{background:#070b1d;color:#ECECEC;overflow:visible!important;height:auto!important;position:relative!important;touch-action:auto!important;-webkit-overflow-scrolling:touch!important;transition:background 0.3s,color 0.3s}
 .container{max-width:480px;margin:0 auto;padding:12px}
@@ -25,7 +25,8 @@ html,body{background:#070b1d;color:#ECECEC;overflow:visible!important;height:aut
 .season-tab{display:flex;gap:8px;margin:10px 0;overflow-x:auto;padding:4px 0}
 .season{background:#10182a;color:#ccd;padding:8px 12px;border-radius:10px;font-size:13px;white-space:nowrap;transition:0.2s}
 .season.active{background:#165DFF;color:#fff}
-.league-scroll{display:flex;gap:8px;overflow-x:auto;padding:6px 0;margin-bottom:12px;white-space:nowrap;-webkit-overflow-scrolling:touch}
+/* 联赛滚动容器：确保子元素不换行，可滑动 */
+.league-scroll{display:flex;gap:8px;overflow-x:auto;padding:6px 0;margin-bottom:12px;white-space:nowrap;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
 .league-item{background:#131b2e;color:#ccd;padding:10px 14px;border-radius:12px;font-size:14px;white-space:nowrap;transition:0.2s;flex-shrink:0}
 .league-item.active{background:#165DFF;color:#fff}
 .custom-input{display:flex;gap:8px;margin:10px 0}
@@ -1136,26 +1137,45 @@ document.querySelectorAll("#leagueList .league-item").forEach(e=>{
   }
 });
 
-// ==================== 修复 loadTeam：如果 teams[league] 不存在，使用默认占位列表 ====================
+// ==================== 修复 loadTeam：确保无论如何都有球队选项 ====================
 function loadTeam() {
-  let h = document.getElementById("homeTeam");
-  let a = document.getElementById("awayTeam");
-  h.innerHTML = "<option>请选择主队</option>";
-  a.innerHTML = "<option>请选择客队</option>";
-  
-  let teamList = [];
-  if (teams[league] && teams[league][season]) {
-    teamList = teams[league][season];
-  } else {
-    // 如果当前联赛没有定义，生成一个通用占位列表
-    console.warn(`联赛 ${league} 没有球队数据，使用占位球队`);
-    teamList = ["主队A", "主队B", "主队C", "客队A", "客队B", "客队C"];
+  try {
+    let h = document.getElementById("homeTeam");
+    let a = document.getElementById("awayTeam");
+    if (!h || !a) return;
+    
+    h.innerHTML = "<option value=''>请选择主队</option>";
+    a.innerHTML = "<option value=''>请选择客队</option>";
+    
+    let teamList = [];
+    // 优先使用预定义数据
+    if (teams[league] && teams[league][season]) {
+      teamList = teams[league][season];
+    } else {
+      console.warn(`联赛 ${league} 没有球队数据，使用默认英超球队`);
+      // 保底：使用英超球队
+      teamList = teams["英超"]["2025-2026"] || ["曼城","利物浦","切尔西","曼联","阿森纳","热刺"];
+    }
+    
+    // 如果还是空，硬编码最后保底
+    if (teamList.length === 0) {
+      teamList = ["曼城","利物浦","切尔西","曼联","阿森纳","热刺"];
+    }
+    
+    teamList.forEach(team => {
+      h.innerHTML += `<option value="${team}">${team}</option>`;
+      a.innerHTML += `<option value="${team}">${team}</option>`;
+    });
+    
+    console.log(`已加载 ${league} 球队：`, teamList);
+  } catch (e) {
+    console.error("loadTeam 出错", e);
+    // 极端保底：手动添加
+    const h = document.getElementById("homeTeam");
+    const a = document.getElementById("awayTeam");
+    if (h) h.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option>";
+    if (a) a.innerHTML = "<option value='曼城'>曼城</option><option value='利物浦'>利物浦</option><option value='切尔西'>切尔西</option>";
   }
-  
-  teamList.forEach(t => {
-    h.innerHTML += `<option>${t}</option>`;
-    a.innerHTML += `<option>${t}</option>`;
-  });
 }
 
 function getTeam(name){
