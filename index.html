@@ -7,7 +7,7 @@
 <meta name="description" content="专业足球AI分析系统，提供赛事预测、比分分析、球队数据、实时模拟，仅供足球爱好者娱乐使用。">
 <meta name="author" content="football-predict.top">
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
-<title>足球AI大数据预测 · 终极真实版·典藏版</title>
+<title>足球AI大数据预测 · 极致真实版·最终章</title>
 <!-- 引入 Chart.js 和 html2canvas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -181,12 +181,12 @@ body.light .community-predict{background:#f5f7fa;color:#1a1a1a}
 <div class="hot-matches" id="hotMatches"></div>
 
 <div class="header">
-<h1 id="siteTitle">⚽ 足球AI大数据预测 · 终极真实版·典藏版</h1>
+<h1 id="siteTitle">⚽ 足球AI大数据预测 · 极致真实版·最终章</h1>
 <div>
   <button id="themeToggle">🌙 切换浅色模式</button>
   <button id="langToggle">🌐 English</button>
 </div>
-<p id="headerSub">化学·大赛·氛围·战术·逆足·门将·客场·赛程·国家队·杯赛心理</p>
+<p id="headerSub">球员情绪·战术多样性·高原·裁判细化·射门区域·定位球战术</p>
 </div>
 
 <!-- 赛季标签（动态生成，见JS） -->
@@ -679,19 +679,13 @@ const leagueAttr = {
          goalTimeDist: [0.9,1.3,1.6,1.5,1.6,2.0], isCup: false}
 };
 
-// ==================== 新增存储 ====================
-// 球队化学/默契度、上次比赛时间、国家队征召等
-let teamChemistry = JSON.parse(localStorage.getItem('teamChemistry')) || {}; // 球队名 -> 默契值
-let teamLastMatch = JSON.parse(localStorage.getItem('teamLastMatch')) || {}; // 球队名 -> 时间戳
-let nationalTeamCall = JSON.parse(localStorage.getItem('nationalTeamCall')) || {}; // 球员key -> 是否被国家队征召
-let lockerRoomIncident = JSON.parse(localStorage.getItem('lockerRoomIncident')) || {}; // 球队名 -> 是否发生矛盾及持续时间
-
 // ==================== Elo 评级系统（带疲劳累积存储）====================
 let eloRatings = JSON.parse(localStorage.getItem('eloRatings')) || {};
 let playerFatigue = JSON.parse(localStorage.getItem('playerFatigue')) || {};
 let playerHotStreak = JSON.parse(localStorage.getItem('playerHotStreak')) || {};
 let playerYellowCards = JSON.parse(localStorage.getItem('playerYellowCards')) || {};
 let teamMorale = JSON.parse(localStorage.getItem('teamMorale')) || {};
+// 新增：球员个人士气（基于近期表现）
 let playerMorale = JSON.parse(localStorage.getItem('playerMorale')) || {};
 
 function initElo(teamName) {
@@ -739,11 +733,8 @@ function getPlayerForm(player, teamName) {
   let hotFactor = playerHotStreak[key] || 1.0;
   let yellowCount = playerYellowCards[key] || 0;
   let yellowFactor = 1 - (yellowCount * 0.02);
+  // 球员个人士气
   let morale = playerMorale[key] || 1.0;
-  // 国家队比赛日影响：最近7天有国家队比赛，状态下降
-  if (nationalTeamCall[key] && Date.now() - nationalTeamCall[key] < 7*24*60*60*1000) {
-    morale *= 0.95;
-  }
   return (player.form || 0.8) * fatigueFactor * hotFactor * yellowFactor * morale;
 }
 
@@ -786,68 +777,28 @@ function updateTeamMorale(teamName, result) {
   localStorage.setItem('teamMorale', JSON.stringify(teamMorale));
 }
 
-// ==================== 新增函数：计算球队化学 ====================
-function computeTeamChemistry(team, players) {
-  // 基于阵容稳定性：连续出场次数、新援比例等
-  let stableCount = 0;
-  players.forEach(p => {
-    let key = `${team}_${p.name}`;
-    if (playerFatigue[key] && playerFatigue[key].lastMatch) {
-      let daysSinceFirst = (Date.now() - playerFatigue[key].lastMatch) / (1000*60*60*24);
-      if (daysSinceFirst > 30) stableCount++; // 一起踢球超过30天算稳定
-    }
-  });
-  let stability = stableCount / players.length;
-  // 新援比例（假设替补也算）粗略处理
-  let newSignings = 0; // 简化，假设没有新援数据
-  let chemistry = stability * 0.7 + (1 - newSignings) * 0.3;
-  teamChemistry[team] = Math.min(1.2, Math.max(0.8, chemistry));
-  localStorage.setItem('teamChemistry', JSON.stringify(teamChemistry));
-  return teamChemistry[team];
-}
-
-// ==================== 新增函数：客场适应系数 ====================
-function getAwayAdaptation(team) {
-  // 基于历史客场胜率（可用elo客场表现），简单用客场胜率
-  let teamObj = teamData[team] || { awayWin: 40 };
-  let awayWinRate = teamObj.awayWin / 100; // 0.4
-  // 联赛平均客场胜率约0.3
-  return awayWinRate / 0.3; // 范围0.7-1.3
-}
-
-// ==================== 新增函数：赛程密集惩罚 ====================
-function getSchedulePenalty(teamName) {
-  let last = teamLastMatch[teamName];
-  if (!last) return 1.0;
-  let days = (Date.now() - last) / (1000*60*60*24);
-  if (days < 3) {
-    return 1 - (3 - days) * 0.05;
-  }
-  return 1.0;
-}
-
 // ==================== 全量球队与球员数据（扩展球员能力值）====================
 const teamData = {
   曼城:{power:96,attack:94,defend:91,home:1.12,away:0.94,homeWin:78,awayWin:65,recentForm:3, 
        players:[
-         {name:"哈兰德", finishing:95, speed:90, passing:75, penalty:90, freeKick:60, aggression:75, defending:40, composure:85, stamina:88, form:0.9, position:"FW", heading:88, weakFoot:80, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
-         {name:"福登", finishing:82, speed:88, passing:85, penalty:75, freeKick:70, aggression:65, defending:45, composure:80, stamina:82, form:0.85, position:"MF", heading:60, weakFoot:85, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"德布劳内", finishing:85, speed:80, passing:96, penalty:85, freeKick:92, aggression:60, defending:50, composure:92, stamina:78, form:0.8, position:"MF", heading:55, weakFoot:90, bigGame:0.95, foot:"right", isNationalTeamPlayer:true},
-         {name:"B席", finishing:80, speed:84, passing:90, penalty:80, freeKick:75, aggression:70, defending:60, composure:88, stamina:85, form:0.85, position:"MF", heading:50, weakFoot:85, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
-         {name:"罗德里", finishing:70, speed:70, passing:85, penalty:70, freeKick:55, aggression:80, defending:85, composure:90, stamina:90, form:0.9, position:"MF", heading:75, weakFoot:70, bigGame:0.85, foot:"right", isNationalTeamPlayer:true},
-         {name:"格拉利什", finishing:75, speed:82, passing:84, penalty:70, freeKick:68, aggression:65, defending:50, composure:75, stamina:80, form:0.75, position:"FW", heading:60, weakFoot:80, bigGame:0.6, foot:"right", isNationalTeamPlayer:true},
-         {name:"多库", finishing:78, speed:95, passing:75, penalty:65, freeKick:50, aggression:70, defending:35, composure:70, stamina:75, form:0.7, position:"FW", heading:45, weakFoot:75, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
-         {name:"阿尔瓦雷斯", finishing:88, speed:85, passing:78, penalty:80, freeKick:72, aggression:75, defending:45, composure:82, stamina:85, form:0.8, position:"FW", heading:70, weakFoot:80, bigGame:0.8, foot:"right", isNationalTeamPlayer:true},
-         {name:"科瓦契奇", finishing:70, speed:78, passing:83, penalty:70, freeKick:65, aggression:75, defending:70, composure:80, stamina:80, form:0.75, position:"MF", heading:60, weakFoot:75, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"努内斯", finishing:72, speed:80, passing:76, penalty:65, freeKick:58, aggression:70, defending:60, composure:75, stamina:78, form:0.7, position:"MF", heading:65, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false},
-         {name:"阿克", finishing:50, speed:75, passing:70, penalty:50, freeKick:40, aggression:70, defending:82, composure:85, stamina:85, form:0.8, position:"DF", heading:78, weakFoot:65, bigGame:0.6, foot:"left", isNationalTeamPlayer:true},
-         {name:"迪亚斯", finishing:45, speed:70, passing:68, penalty:45, freeKick:35, aggression:65, defending:90, composure:90, stamina:88, form:0.9, position:"DF", heading:85, weakFoot:60, bigGame:0.9, foot:"right", isNationalTeamPlayer:true},
-         {name:"斯通斯", finishing:55, speed:72, passing:80, penalty:60, freeKick:50, aggression:60, defending:80, composure:85, stamina:80, form:0.8, position:"DF", heading:75, weakFoot:70, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"格瓦迪奥尔", finishing:60, speed:80, passing:75, penalty:60, freeKick:55, aggression:75, defending:85, composure:82, stamina:90, form:0.85, position:"DF", heading:82, weakFoot:70, bigGame:0.8, foot:"left", isNationalTeamPlayer:true},
-         {name:"沃克", finishing:45, speed:92, passing:70, penalty:50, freeKick:40, aggression:80, defending:78, composure:80, stamina:85, form:0.8, position:"DF", heading:70, weakFoot:65, bigGame:0.7, foot:"right", isNationalTeamPlayer:true},
-         {name:"刘易斯", finishing:50, speed:82, passing:72, penalty:55, freeKick:45, aggression:65, defending:65, composure:75, stamina:78, form:0.7, position:"DF", heading:60, weakFoot:75, bigGame:0.4, foot:"right", isNationalTeamPlayer:false},
-         {name:"奥尔特加", finishing:30, speed:50, passing:55, penalty:30, freeKick:20, aggression:40, defending:20, composure:70, stamina:70, form:0.8, position:"GK", diving:85, handling:80, reflexes:82, rushing:70, communication:75},
-         {name:"埃德森", finishing:35, speed:55, passing:78, penalty:40, freeKick:25, aggression:45, defending:25, composure:85, stamina:75, form:0.9, position:"GK", diving:90, handling:88, reflexes:89, rushing:85, communication:90}
+         {name:"哈兰德", finishing:95, speed:90, passing:75, penalty:90, freeKick:60, aggression:75, defending:40, composure:85, stamina:88, form:0.9, position:"FW", heading:88, weakFoot:80},
+         {name:"福登", finishing:82, speed:88, passing:85, penalty:75, freeKick:70, aggression:65, defending:45, composure:80, stamina:82, form:0.85, position:"MF", heading:60, weakFoot:85},
+         {name:"德布劳内", finishing:85, speed:80, passing:96, penalty:85, freeKick:92, aggression:60, defending:50, composure:92, stamina:78, form:0.8, position:"MF", heading:55, weakFoot:90},
+         {name:"B席", finishing:80, speed:84, passing:90, penalty:80, freeKick:75, aggression:70, defending:60, composure:88, stamina:85, form:0.85, position:"MF", heading:50, weakFoot:85},
+         {name:"罗德里", finishing:70, speed:70, passing:85, penalty:70, freeKick:55, aggression:80, defending:85, composure:90, stamina:90, form:0.9, position:"MF", heading:75, weakFoot:70},
+         {name:"格拉利什", finishing:75, speed:82, passing:84, penalty:70, freeKick:68, aggression:65, defending:50, composure:75, stamina:80, form:0.75, position:"FW", heading:60, weakFoot:80},
+         {name:"多库", finishing:78, speed:95, passing:75, penalty:65, freeKick:50, aggression:70, defending:35, composure:70, stamina:75, form:0.7, position:"FW", heading:45, weakFoot:75},
+         {name:"阿尔瓦雷斯", finishing:88, speed:85, passing:78, penalty:80, freeKick:72, aggression:75, defending:45, composure:82, stamina:85, form:0.8, position:"FW", heading:70, weakFoot:80},
+         {name:"科瓦契奇", finishing:70, speed:78, passing:83, penalty:70, freeKick:65, aggression:75, defending:70, composure:80, stamina:80, form:0.75, position:"MF", heading:60, weakFoot:75},
+         {name:"努内斯", finishing:72, speed:80, passing:76, penalty:65, freeKick:58, aggression:70, defending:60, composure:75, stamina:78, form:0.7, position:"MF", heading:65, weakFoot:70},
+         {name:"阿克", finishing:50, speed:75, passing:70, penalty:50, freeKick:40, aggression:70, defending:82, composure:85, stamina:85, form:0.8, position:"DF", heading:78, weakFoot:65},
+         {name:"迪亚斯", finishing:45, speed:70, passing:68, penalty:45, freeKick:35, aggression:65, defending:90, composure:90, stamina:88, form:0.9, position:"DF", heading:85, weakFoot:60},
+         {name:"斯通斯", finishing:55, speed:72, passing:80, penalty:60, freeKick:50, aggression:60, defending:80, composure:85, stamina:80, form:0.8, position:"DF", heading:75, weakFoot:70},
+         {name:"格瓦迪奥尔", finishing:60, speed:80, passing:75, penalty:60, freeKick:55, aggression:75, defending:85, composure:82, stamina:90, form:0.85, position:"DF", heading:82, weakFoot:70},
+         {name:"沃克", finishing:45, speed:92, passing:70, penalty:50, freeKick:40, aggression:80, defending:78, composure:80, stamina:85, form:0.8, position:"DF", heading:70, weakFoot:65},
+         {name:"刘易斯", finishing:50, speed:82, passing:72, penalty:55, freeKick:45, aggression:65, defending:65, composure:75, stamina:78, form:0.7, position:"DF", heading:60, weakFoot:75},
+         {name:"奥尔特加", finishing:30, speed:50, passing:55, penalty:30, freeKick:20, aggression:40, defending:20, composure:70, stamina:70, form:0.8, position:"GK", diving:85, handling:80, reflexes:82},
+         {name:"埃德森", finishing:35, speed:55, passing:78, penalty:40, freeKick:25, aggression:45, defending:25, composure:85, stamina:75, form:0.9, position:"GK", diving:90, handling:88, reflexes:89}
        ],
        substitutes:[
          {name:"菲利普斯", finishing:65, speed:70, passing:75, penalty:65, freeKick:60, aggression:75, defending:70, composure:75, stamina:80, form:0.7, position:"MF"},
@@ -855,7 +806,7 @@ const teamData = {
          {name:"帕尔默", finishing:75, speed:80, passing:78, penalty:70, freeKick:68, aggression:65, defending:40, composure:80, stamina:75, form:0.8, position:"MF"}
        ],
        formation:"4-3-3",
-       city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)", xG:2.1, xGA:0.9, altitude:50,
+       city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)", xG:2.1, xGA:0.9, altitude:50, // 海拔50米
        injuries:["德布劳内(核心中场) 伤缺"], styleDesc:"高位逼抢,边路进攻", xgImpact:0.2, 
        coach:{name:"瓜迪奥拉", style:"控球", aggression:0.7, defense:0.6, tacticFactor:1.1, possibleStyles:["控球","高位逼抢"]}},
   // 其他球队可类似扩展，此处仅保留曼城作为示例
@@ -911,6 +862,7 @@ function useCustomTeam() {
   let a = document.getElementById("customAway").value.trim();
   if (!h || !a) { showToast("请输入主队和客队名称"); return; }
   customHome = h; customAway = a; isCustom = true;
+  // 为自定义球队创建默认球员列表
   customHomePlayers = [{ name: "未知", finishing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW" }];
   customAwayPlayers = [{ name: "未知", finishing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW" }];
   document.getElementById("matchInfo").innerText = `已启用手写：${h} vs ${a}`;
@@ -972,6 +924,7 @@ function loadTeam() {
 
 function getTeam(name){
   if (isCustom) {
+    // 使用自定义球队默认球员
     return {power:80+Math.random()*16, attack:78+Math.random()*12, defend:78+Math.random()*12, style:1, home:1.05, away:0.97, homeWin:55, awayWin:45, recentForm:0, 
             players: customHomePlayers, substitutes:[], city:"未知", topScorer:"未知", topAssist:"未知", altitude:0,
             xG:1.5, xGA:1.5, injuries:[], styleDesc:"未知", xgImpact:0, 
@@ -980,8 +933,9 @@ function getTeam(name){
   let team = teamData[name] || {power:75, attack:70, defend:70, style:1, home:1.0, away:1.0, homeWin:50, awayWin:40, recentForm:0, players:["未知"], substitutes:[], city:"伦敦", topScorer:"未知", topAssist:"未知", altitude:0, xG:1.4, xGA:1.4, injuries:[], styleDesc:"未知", xgImpact:0, coach:{name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"]}};
   if (!team.coach) team.coach = { name:"默认教练", style:"均衡", aggression:0.6, defense:0.6, tacticFactor:1.0, possibleStyles:["均衡"] };
   if (team.players && typeof team.players[0] === 'string') {
-    team.players = team.players.map(p => ({name:p, finishing:70, speed:70, passing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false}));
+    team.players = team.players.map(p => ({name:p, finishing:70, speed:70, passing:70, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, form:0.8, position:"FW", heading:60, weakFoot:70}));
   }
+  // 过滤停赛球员
   if (team.players) {
     team.players = team.players.filter(p => {
       let key = `${name}_${p.name}`;
@@ -990,8 +944,6 @@ function getTeam(name){
   }
   initElo(name);
   team.power = eloRatings[name] || 1500;
-  // 计算球队化学
-  team.chemistry = computeTeamChemistry(name, team.players);
   return team;
 }
 function getHomeName(){ return isCustom ? customHome : document.getElementById("homeTeam").value; }
@@ -1315,27 +1267,15 @@ async function startAI(){
     let importanceFactor = getImportanceFactor(hn, an, lg);
     let homeMorale = getTeamMorale(hn);
     let awayMorale = getTeamMorale(an);
-    // 高原影响
+    // 高原影响（海拔每高1000米，客队体能消耗增加5%）
     let altitudeFactorHome = 1.0;
     let altitudeFactorAway = 1.0;
-    if (h.altitude > 1000) altitudeFactorAway *= 0.95;
+    if (h.altitude > 1000) altitudeFactorAway *= 0.95; // 客队受影响
     if (a.altitude > 1000) altitudeFactorHome *= 0.95;
-    // 客场适应系数
-    let awayAdaptHome = getAwayAdaptation(hn);
-    let awayAdaptAway = getAwayAdaptation(an);
-    // 赛程密集惩罚
-    let schedulePenaltyHome = getSchedulePenalty(hn);
-    let schedulePenaltyAway = getSchedulePenalty(an);
-    // 更衣室氛围影响
-    let lockerPenaltyHome = lockerRoomIncident[hn] ? 0.95 : 1.0;
-    let lockerPenaltyAway = lockerRoomIncident[an] ? 0.95 : 1.0;
-    // 球队化学
-    let chemistryHome = h.chemistry || 1.0;
-    let chemistryAway = a.chemistry || 1.0;
     
-    let ph = (eloRatings[hn] || 1500) * h.home * modelParams.homeWeight * importanceFactor * homeMorale * altitudeFactorHome * schedulePenaltyHome * lockerPenaltyHome * chemistryHome + h.recentForm * modelParams.formWeight * 2;
-    let pa = (eloRatings[an] || 1500) * a.away * modelParams.homeWeight * importanceFactor * awayMorale * altitudeFactorAway * schedulePenaltyAway * lockerPenaltyAway * chemistryAway * awayAdaptAway + a.recentForm * modelParams.formWeight * 2;
-    // 历史交锋心理优势
+    let ph = (eloRatings[hn] || 1500) * h.home * modelParams.homeWeight * importanceFactor * homeMorale * altitudeFactorHome + h.recentForm * modelParams.formWeight * 2;
+    let pa = (eloRatings[an] || 1500) * a.away * modelParams.homeWeight * importanceFactor * awayMorale * altitudeFactorAway + a.recentForm * modelParams.formWeight * 2;
+    // 加入历史交锋心理优势
     ph += globalH2hFactor * 50;
     pa -= globalH2hFactor * 50;
 
@@ -1630,8 +1570,9 @@ function getGoalDescription(min, weather, isOwnGoal = false) {
   return desc;
 }
 
+// 射门区域概率（禁区内 vs 禁区外）
 function getShotRegion() {
-  return Math.random() < 0.6 ? 'inside' : 'outside';
+  return Math.random() < 0.6 ? 'inside' : 'outside'; // 60%禁区内
 }
 
 let shotRecords = { home: [], away: [] };
@@ -1672,7 +1613,7 @@ function startSim() {
   let hBall = Math.min(70, Math.max(30, 50 + ((eloRatings[hn]||1500) - (eloRatings[an]||1500))/50));
   let aBall = 100 - hBall;
 
-  let tacticsChanged = 0; // 记录战术变化次数
+  let tacticsChanged = false;
   let currentTacticH = h.coach.style;
   let currentTacticA = a.coach.style;
   let injuryTimeSeconds = 0;
@@ -1680,14 +1621,14 @@ function startSim() {
   let isExtraTime = false;
   let possessionTimeline = [];
 
-  let homePlayers = (h.players && h.players.length) ? h.players : [{name:"未知", finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false}];
-  let awayPlayers = (a.players && a.players.length) ? a.players : [{name:"未知", finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false}];
+  let homePlayers = (h.players && h.players.length) ? h.players : [{name:"未知", finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70}];
+  let awayPlayers = (a.players && a.players.length) ? a.players : [{name:"未知", finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70}];
   let homeSubs = h.substitutes || [];
   let awaySubs = a.substitutes || [];
-  homePlayers = homePlayers.map(p => typeof p === 'string' ? {name:p, finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false} : p);
-  awayPlayers = awayPlayers.map(p => typeof p === 'string' ? {name:p, finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70, bigGame:0.5, foot:"right", isNationalTeamPlayer:false} : p);
-  homeSubs = homeSubs.map(p => typeof p === 'string' ? {name:p, finishing:65, form:0.7, penalty:55, freeKick:45, aggression:65, defending:60, composure:65, stamina:70, position:"FW", heading:55, weakFoot:65, bigGame:0.4, foot:"right", isNationalTeamPlayer:false} : p);
-  awaySubs = awaySubs.map(p => typeof p === 'string' ? {name:p, finishing:65, form:0.7, penalty:55, freeKick:45, aggression:65, defending:60, composure:65, stamina:70, position:"FW", heading:55, weakFoot:65, bigGame:0.4, foot:"right", isNationalTeamPlayer:false} : p);
+  homePlayers = homePlayers.map(p => typeof p === 'string' ? {name:p, finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70} : p);
+  awayPlayers = awayPlayers.map(p => typeof p === 'string' ? {name:p, finishing:70, form:0.8, penalty:60, freeKick:50, aggression:65, defending:60, composure:70, stamina:75, position:"FW", heading:60, weakFoot:70} : p);
+  homeSubs = homeSubs.map(p => typeof p === 'string' ? {name:p, finishing:65, form:0.7, penalty:55, freeKick:45, aggression:65, defending:60, composure:65, stamina:70, position:"FW", heading:55, weakFoot:65} : p);
+  awaySubs = awaySubs.map(p => typeof p === 'string' ? {name:p, finishing:65, form:0.7, penalty:55, freeKick:45, aggression:65, defending:60, composure:65, stamina:70, position:"FW", heading:55, weakFoot:65} : p);
 
   let homeGK = getGoalkeeper(homePlayers);
   let awayGK = getGoalkeeper(awayPlayers);
@@ -1771,10 +1712,6 @@ function startSim() {
           updateTeamMorale(hn, 'draw');
           updateTeamMorale(an, 'draw');
         }
-        // 记录球队最后比赛时间
-        teamLastMatch[hn] = Date.now();
-        teamLastMatch[an] = Date.now();
-        localStorage.setItem('teamLastMatch', JSON.stringify(teamLastMatch));
         return;
       }
     }
@@ -1800,13 +1737,15 @@ function startSim() {
     let homeCrowd = crowdFactor;
     let homeMorale = getTeamMorale(hn);
     let awayMorale = getTeamMorale(an);
-    // 高原影响
-    if (h.altitude > 1000) awayEnergy.forEach((e,i) => awayEnergy[i] -= 0.1);
-    if (a.altitude > 1000) homeEnergy.forEach((e,i) => homeEnergy[i] -= 0.1);
-
-    // 球队化学影响传球
-    hPass *= (h.chemistry || 1.0);
-    aPass *= (a.chemistry || 1.0);
+    // 高原影响体能消耗
+    let altitudeFactorHome = 1.0;
+    let altitudeFactorAway = 1.0;
+    if (h.altitude > 1000) {
+      awayEnergy.forEach((e,i) => awayEnergy[i] -= 0.1); // 客队每分钟额外消耗
+    }
+    if (a.altitude > 1000) {
+      homeEnergy.forEach((e,i) => homeEnergy[i] -= 0.1);
+    }
 
     let homeLambda = h.xG * h.home * (1 + mlFactor) * (1 + ref.homeBias/10) * homeCrowd * homeMorale;
     let awayLambda = a.xG * a.away * (1 - mlFactor) * (1 - ref.homeBias/10) * awayMorale;
@@ -1819,33 +1758,17 @@ function startSim() {
     goalH = Math.max(0.001, goalH);
     goalA = Math.max(0.001, goalA);
 
-    // 战术多样性：可以多次调整
-    if (min > 60 && hg < ag && tacticsChanged < 2) {
-      if (tacticsChanged === 0) {
-        currentTacticH = "全线压上";
-        goalH *= 1.3;
-        goalA *= 0.8;
-        document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 主队变阵全线压上！`;
-      } else if (tacticsChanged === 1) {
-        currentTacticH = "搏命进攻";
-        goalH *= 1.5;
-        goalA *= 0.7;
-        document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 主队搏命进攻！`;
-      }
-      tacticsChanged++;
-    } else if (min > 60 && ag < hg && tacticsChanged < 2) {
-      if (tacticsChanged === 0) {
-        currentTacticA = "全线压上";
-        goalA *= 1.3;
-        goalH *= 0.8;
-        document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 客队变阵全线压上！`;
-      } else if (tacticsChanged === 1) {
-        currentTacticA = "搏命进攻";
-        goalA *= 1.5;
-        goalH *= 0.7;
-        document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 客队搏命进攻！`;
-      }
-      tacticsChanged++;
+    // 战术多样性：落后方切换更激进战术
+    if (min > 60 && hg < ag && currentTacticH !== "全线压上") {
+      currentTacticH = "全线压上";
+      goalH *= 1.3;
+      goalA *= 0.8;
+      document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 主队变阵全线压上！`;
+    } else if (min > 60 && ag < hg && currentTacticA !== "全线压上") {
+      currentTacticA = "全线压上";
+      goalA *= 1.3;
+      goalH *= 0.8;
+      document.getElementById("simEvent").innerText = `⚡ ${displayMin.toFixed(2)}′ 客队变阵全线压上！`;
     }
 
     // 角球进攻
@@ -1854,6 +1777,7 @@ function startSim() {
       let shooter = weightedRandomPlayer(homePlayers, false, false, hn);
       let form = getPlayerForm(shooter, hn);
       let region = getShotRegion();
+      // 角球通常头球，使用heading属性
       let shotProb = region === 'inside' ? (shooter.heading || 60) : (shooter.finishing || 70);
       let onTarget = Math.random() < (shotProb/100 * form) ? 1 : 0;
       if (onTarget) hShotOnTarget++;
@@ -1971,6 +1895,7 @@ function startSim() {
       updateInjuryTime(6);
       let foulType = Math.random() < 0.3 ? 'tackle' : 'other';
       if (foulType === 'tackle' && Math.random() < ref.tackleStrict) {
+        // 背后铲球大概率得牌
         if (Math.random() < 0.5) {
           let player = homePlayers[Math.floor(Math.random()*homePlayers.length)];
           addYellowCard(player, hn);
@@ -2002,7 +1927,7 @@ function startSim() {
       if (Math.random() < 0.5) { hOff++; event = `🚩 ${displayMin.toFixed(2)}′ ${hn} 越位`; } 
       else { aOff++; event = `🚩 ${displayMin.toFixed(2)}′ ${an} 越位`; }
     }
-    // 射门（考虑逆足）
+    // 射门
     else if (rand < 0.08 && !varPending) {
       updateInjuryTime(4);
       if (Math.random() < hBall/100) {
@@ -2010,10 +1935,7 @@ function startSim() {
         let shooter = weightedRandomPlayer(homePlayers, false, false, hn);
         let form = getPlayerForm(shooter, hn);
         let region = getShotRegion();
-        // 是否用弱脚？简化：40%概率用弱脚
-        let footFactor = (Math.random() < 0.4) ? (shooter.weakFoot/100) : 1.0;
-        let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 : (shooter.finishing || 70) * 0.8;
-        shotProb *= footFactor;
+        let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 : (shooter.finishing || 70) * 0.8; // 禁区内射门成功率更高
         let onTarget = Math.random() < (shotProb/100 * form) ? 1 : 0;
         if (onTarget) {
           if (isSavedByGoalkeeper(shooter, awayGK, true)) {
@@ -2032,9 +1954,7 @@ function startSim() {
         let shooter = weightedRandomPlayer(awayPlayers, false, false, an);
         let form = getPlayerForm(shooter, an);
         let region = getShotRegion();
-        let footFactor = (Math.random() < 0.4) ? (shooter.weakFoot/100) : 1.0;
         let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 : (shooter.finishing || 70) * 0.8;
-        shotProb *= footFactor;
         let onTarget = Math.random() < (shotProb/100 * form) ? 1 : 0;
         if (onTarget) {
           if (isSavedByGoalkeeper(shooter, homeGK, true)) {
@@ -2078,17 +1998,12 @@ function startSim() {
         event = `${displayMin.toFixed(2)}′ ${an} 换人，${sub.name} 替补登场`;
       }
     }
-    // 进球（考虑大赛经验和composure）
+    // 进球
     else if (Math.random() < goalH && !varPending) {
       let shooter = weightedRandomPlayer(homePlayers, false, false, hn);
       let form = getPlayerForm(shooter, hn);
       let region = getShotRegion();
-      let footFactor = (Math.random() < 0.4) ? (shooter.weakFoot/100) : 1.0;
-      // 大赛经验在杯赛或加时赛提高composure
-      let composureFactor = 1.0;
-      if (isCup || isExtraTime) composureFactor += shooter.bigGame * 0.2;
-      let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 * composureFactor : (shooter.finishing || 70) * 0.8 * composureFactor;
-      shotProb *= footFactor;
+      let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 : (shooter.finishing || 70) * 0.8;
       let shotOnTarget = Math.random() < (shotProb/100 * form) ? 1 : 0;
       if (shotOnTarget) {
         if (!isSavedByGoalkeeper(shooter, awayGK, true)) {
@@ -2116,11 +2031,7 @@ function startSim() {
       let shooter = weightedRandomPlayer(awayPlayers, false, false, an);
       let form = getPlayerForm(shooter, an);
       let region = getShotRegion();
-      let footFactor = (Math.random() < 0.4) ? (shooter.weakFoot/100) : 1.0;
-      let composureFactor = 1.0;
-      if (isCup || isExtraTime) composureFactor += shooter.bigGame * 0.2;
-      let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 * composureFactor : (shooter.finishing || 70) * 0.8 * composureFactor;
-      shotProb *= footFactor;
+      let shotProb = region === 'inside' ? (shooter.finishing || 70) * 1.2 : (shooter.finishing || 70) * 0.8;
       let shotOnTarget = Math.random() < (shotProb/100 * form) ? 1 : 0;
       if (shotOnTarget) {
         if (!isSavedByGoalkeeper(shooter, homeGK, true)) {
@@ -2234,11 +2145,6 @@ function simulatePenaltyShootoutWithAbility(hn, an, homePlayers, awayPlayers, hB
     let awayTaker = weightedRandomPlayer(awayPlayers, true, false, an);
     let homeProb = (homeTaker.penalty || 60) / 100 * getPlayerForm(homeTaker, hn);
     let awayProb = (awayTaker.penalty || 60) / 100 * getPlayerForm(awayTaker, an);
-    // 大赛经验影响点球
-    if (isCup) {
-      homeProb *= (1 + homeTaker.bigGame * 0.1);
-      awayProb *= (1 + awayTaker.bigGame * 0.1);
-    }
     let gkSaveProbHome = (homeGK.diving || 70) / 100 * 0.3;
     let gkSaveProbAway = (awayGK.diving || 70) / 100 * 0.3;
     if (Math.random() < homeProb * (1 - gkSaveProbAway)) homeScore++;
@@ -2249,10 +2155,6 @@ function simulatePenaltyShootoutWithAbility(hn, an, homePlayers, awayPlayers, hB
     let awayTaker = weightedRandomPlayer(awayPlayers, true, false, an);
     let homeProb = (homeTaker.penalty || 60) / 100 * getPlayerForm(homeTaker, hn);
     let awayProb = (awayTaker.penalty || 60) / 100 * getPlayerForm(awayTaker, an);
-    if (isCup) {
-      homeProb *= (1 + homeTaker.bigGame * 0.1);
-      awayProb *= (1 + awayTaker.bigGame * 0.1);
-    }
     let gkSaveProbHome = (homeGK.diving || 70) / 100 * 0.3;
     let gkSaveProbAway = (awayGK.diving || 70) / 100 * 0.3;
     if (Math.random() < homeProb * (1 - gkSaveProbAway)) homeScore++;
@@ -2358,8 +2260,8 @@ themeToggle.addEventListener('click', () => {
 let currentLang = 'zh';
 const langToggle = document.getElementById('langToggle');
 const langData = {
-  zh: { siteTitle:'⚽ 足球AI大数据预测 · 终极真实版·典藏版', headerSub:'化学·大赛·氛围·战术·逆足·门将·客场·赛程·国家队·杯赛心理', themeToggle:'🌙 切换浅色模式', langToggle:'🌐 English', aiBtn:'🚀 AI深度预测 (含历史分布融合)', simBtn:'🎮 开始模拟比赛 (1:1真实事件)' },
-  en: { siteTitle:'⚽ Football AI Prediction · Ultimate Real', headerSub:'Chemistry·BigGame·LockerRoom·Tactics·WeakFoot·Goalkeeper·Away·Schedule·National·CupPsychology', themeToggle:'🌙 Toggle Light Mode', langToggle:'🌐 中文', aiBtn:'🚀 AI Prediction (with History)', simBtn:'🎮 Start Simulation (Live Events)' }
+  zh: { siteTitle:'⚽ 足球AI大数据预测 · 极致真实版·最终章', headerSub:'球员情绪·战术多样性·高原·裁判细化·射门区域·定位球战术', themeToggle:'🌙 切换浅色模式', langToggle:'🌐 English', aiBtn:'🚀 AI深度预测 (含历史分布融合)', simBtn:'🎮 开始模拟比赛 (1:1真实事件)' },
+  en: { siteTitle:'⚽ Football AI Prediction · Ultimate Real', headerSub:'PlayerMorale·Tactics·Altitude·Referee·ShotRegion·SetPiece', themeToggle:'🌙 Toggle Light Mode', langToggle:'🌐 中文', aiBtn:'🚀 AI Prediction (with History)', simBtn:'🎮 Start Simulation (Live Events)' }
 };
 function updateLang(lang) {
   document.getElementById('siteTitle').innerText = langData[lang].siteTitle;
