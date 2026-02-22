@@ -7,6 +7,130 @@
 <meta name="description" content="专业足球AI分析系统，提供赛事预测、比分分析、球队数据、实时模拟，仅供足球爱好者娱乐使用。">
 <meta name="author" content="football-predict.top">
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
+<title>足球AI大数据预测 · 终极真实版·传奇终章</title>
+<!-- 引入 Chart.js 和 html2canvas -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- 引入 Sortable 用于阵容拖拽 -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+/* 样式与之前完全一致，为节省篇幅此处略，实际使用时保留完整样式 */
+*{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+html,body{background:#070b1d;color:#ECECEC;overflow:visible!important;height:auto!important;position:relative!important;touch-action:auto!important;-webkit-overflow-scrolling:touch!important;transition:background 0.3s,color 0.3s}
+.container{max-width:480px;margin:0 auto;padding:12px}
+.header{text-align:center;padding:16px 0 10px;position:relative}
+.header h1{font-size:22px;color:#FFD700;font-weight:600}
+.header p{font-size:12px;color:#aab}
+#themeToggle,#langToggle{margin-top:8px;padding:8px 16px;border-radius:20px;border:none;background:#165DFF;color:#fff;font-size:13px;cursor:pointer;display:inline-block;margin:4px}
+.season-tab{display:flex;gap:8px;margin:10px 0;overflow-x:auto;padding:4px 0}
+.season{background:#10182a;color:#ccd;padding:8px 12px;border-radius:10px;font-size:13px;white-space:nowrap;transition:0.2s}
+.season.active{background:#165DFF;color:#fff}
+.league-scroll{display:flex;gap:8px;overflow-x:auto;padding:6px 0;margin-bottom:12px}
+.league-item{background:#131b2e;color:#ccd;padding:10px 14px;border-radius:12px;font-size:14px;white-space:nowrap;transition:0.2s}
+.league-item.active{background:#165DFF;color:#fff}
+.custom-input{display:flex;gap:8px;margin:10px 0}
+.custom-input input{flex:1;background:#151d30;border:none;border-radius:10px;padding:12px 14px;color:#fff;font-size:15px}
+.use-custom{background:#2DCE89;color:white;border:none;border-radius:10px;padding:12px 14px;font-size:14px;margin-top:4px;width:100%}
+.match-select{margin-bottom:12px}
+.match-select select{width:100%;background:#151d30;border:none;border-radius:12px;padding:14px;color:#fff;font-size:15px;margin-bottom:8px}
+.match-select select:disabled{opacity:.6}
+.data-card{background:#0F1628;border-radius:16px;padding:16px;margin-bottom:12px}
+.data-card .title{font-size:14px;color:#aab;margin-bottom:10px}
+.ai-score{text-align:center;font-size:40px;color:#FFD700;font-weight:bold;margin:10px 0}
+.score-group{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.score-item{background:#131b2e;border-radius:10px;padding:10px;text-align:center}
+.score-item .num{font-size:16px;color:#FFD700}
+.score-item .tag{font-size:11px;color:#aab}
+.prob-group{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.prob-item{background:#131b2e;border-radius:10px;padding:14px;text-align:center}
+.prob-item .num{font-size:18px;color:#fff}
+.prob-item .text{font-size:11px;color:#aab}
+.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.btn{padding:16px;border-radius:14px;border:none;font-size:15px}
+.btn-blue{background:#165DFF;color:#fff}
+.btn-green{background:#00B42A;color:#fff}
+.btn-orange{background:#FF8C00;color:#fff}
+.sim-box{background:#0C1322;border-radius:16px;padding:18px;margin-top:12px;text-align:center}
+.sim-time{color:#4096FF;font-size:14px;margin-bottom:8px}
+.sim-score{font-size:34px;color:#fff;margin:8px 0}
+.sim-event{color:#c0c8d;font-size:13px;min-height:36px;line-height:1.4}
+.sim-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;font-size:12px;color:#ccc}
+.sim-stats .stat-item{background:#131b2e;padding:6px;border-radius:6px}
+.power-bar{height:6px;background:#151d30;border-radius:3px;overflow:hidden;margin-top:6px}
+.power-bar .bar{height:100%;background:#165DFF;transition:width 0.8s}
+.match-info{background:#131b2e;border-radius:12px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#c0c8d}
+.recent-box{background:#131b2e;border-radius:10px;padding:10px;margin-top:8px;font-size:12px;color:#aab}
+.record{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:12px;}
+.record span{padding:3px 6px;border-radius:4px;background:#151d30;color:#fff;}
+.record .win{background:#00B42A;}
+.record .draw{background:#FFA500;}
+.record .lose{background:#FF4D4F;}
+.vs-record{font-size:12px;color:#ccc;background:#131b2e;padding:10px;border-radius:10px;margin-top:8px;line-height:1.5}
+.hot-box{display:flex;justify-content:space-between;font-size:12px;color:#ccc;margin-top:8px}
+.accuracy-box{background:#131b2e;border-radius:12px;padding:12px 14px;margin-top:12px;text-align:center;font-size:13px;color:#ccc;border-left:3px solid #165DFF;}
+.ai-confidence{background:#131b2e;border-radius:12px;padding:10px 14px;margin-top:8px;text-align:center;font-size:14px;font-weight:bold;color:#FFD700;}
+.league-note{background:#151d30;border-radius:10px;padding:8px 12px;margin-top:8px;font-size:12px;color:#ccc;text-align:center;}
+.home-away-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;font-size:12px;color:#ccc;}
+.home-away-stats .stat-item{background:#131b2e;padding:10px;border-radius:10px;text-align:center;}
+.pro-detail{background:#131b2e;border-radius:12px;padding:12px;margin-top:12px;font-size:12px;color:#ddd;line-height:1.6}
+.pro-detail .item{display:flex;justify-content:space-between;margin-bottom:4px}
+.pro-detail .label{color:#aab}
+.pro-detail .value{color:#FFD700;font-weight:bold}
+.real-data{background:#0f1628;border-radius:12px;padding:12px;margin-top:12px}
+.real-data .title{font-size:13px;color:#FFD700;margin-bottom:8px}
+.real-data .table{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px}
+.real-data .table-item{background:#131b2e;padding:6px;border-radius:6px;text-align:center}
+.injury-info{background:#151d30;border-radius:10px;padding:10px;margin-top:8px;font-size:12px;color:#f88}
+.schedule-box{background:#0c1322;border-radius:10px;padding:8px;margin-top:10px;font-size:11px;max-height:120px;overflow-y:auto}
+.schedule-item{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid #222e40}
+.lineup-box{background:#0c1322;border-radius:10px;padding:8px;margin-top:10px;font-size:11px;display:flex;justify-content:space-between}
+.lineup-box div{width:48%}
+.lineup-box .home-lineup{color:#4096FF}
+.lineup-box .away-lineup{color:#FF4D4F}
+.rating-box{background:#0c1322;border-radius:10px;padding:8px;margin-top:8px;font-size:11px;display:flex;flex-direction:column;gap:4px}
+.rating-box .home-rating{color:#4096FF}
+.rating-box .away-rating{color:#FF4D4F}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#165DFF;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;display:none;z-index:999}
+.loading-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:1000}
+.loading-modal.active{display:flex}
+.loading-spin{width:40px;height:40px;border:3px solid #151d30;border-top:3px solid #165DFF;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.slider-group{background:#131b2e;border-radius:10px;padding:10px;margin-top:10px}
+.slider-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.slider-item input{width:60%;background:#151d30;accent-color:#165DFF}
+.slider-item span{color:#FFD700}
+.chart-container{height:200px;margin-top:10px}
+.news-ticker{background:#0c1322;border-radius:8px;padding:8px;font-size:12px;white-space:nowrap;overflow:hidden;animation:scroll 15s linear infinite;margin-bottom:10px}
+@keyframes scroll{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.odds-table{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;font-size:12px;text-align:center}
+.odds-table div{padding:4px;background:#151d30;border-radius:4px}
+.hot-matches{display:flex;gap:6px;overflow-x:auto;padding:6px 0;margin-bottom:12px}
+.hot-match{background:#131b2e;border-radius:10px;padding:8px 12px;font-size:12px;white-space:nowrap;cursor:pointer;transition:0.2s}
+.hot-match:hover{background:#165DFF}
+.team-badge{display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-size:12px;font-weight:bold;margin-right:6px}
+.history-box{display:flex;gap:6px;margin-top:8px;overflow-x:auto}
+.history-item{background:#151d30;border-radius:8px;padding:6px 10px;font-size:11px;white-space:nowrap;cursor:pointer}
+.history-item:hover{background:#2a3444}
+.transfer-ticker{background:#0c1322;border-radius:8px;padding:6px;font-size:12px;white-space:nowrap;overflow:hidden;animation:scroll 15s linear infinite;margin-bottom:6px}
+.value-badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:10px;margin-left:4px}
+.value-high{background:#2DCE89;color:#fff}
+.value-neutral{background:#FFA500;color:#fff}
+.value-low{background:#FF4D4F;color:#fff}
+.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a2538;padding:20px;border-radius:16px;z-index:1001;max-width:90%;width:350px;display:none;border:1px solid #4096FF}
+.modal.active{display:block}
+.modal-title{color:#FFD700;margin-bottom:10px;font-size:16px}
+.modal-content{color:#ccc;font-size:14px;line-height:1.6}
+.modal-close{position:absolute;top:10px;right:10px;color:#fff;background:none;border:none;font-size:18px;cursor:pointer}
+.user-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.user-info{display:flex;align-items:center;gap:8px}<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="keywords" content="足球预测,足球分析,足球AI,赛事预测,体育数据,比分预测,足球大数据">
+<meta name="description" content="专业足球AI分析系统，提供赛事预测、比分分析、球队数据、实时模拟，仅供足球爱好者娱乐使用。">
+<meta name="author" content="football-predict.top">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
 <title>足球AI大数据预测 · 终极真实版·典藏版</title>
 <!-- 引入 Chart.js 和 html2canvas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
