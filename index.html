@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+/* 原有样式保持不变，此处仅保留关键样式，实际完整样式已在代码中 */
 *{margin:0;padding:0;box-sizing:border-box;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
 html,body{background:#070b1d;color:#ECECEC;overflow:visible!important;height:auto!important;position:relative!important;touch-action:auto!important;-webkit-overflow-scrolling:touch!important;transition:background 0.3s,color 0.3s}
 .container{max-width:480px;margin:0 auto;padding:12px}
@@ -332,7 +333,7 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 
 <!-- ========== 新增高级特性卡片：泊松回归/贝叶斯/蒙特卡洛/特征工程 ========== -->
 <div class="advanced-card">
-  <div class="title" style="color:#FFD700;">🧪 高级特性 (图片建议：泊松回归+贝叶斯+蒙特卡洛+特征工程)</div>
+  <div class="title" style="color:#FFD700;">🧪 高级特性 (图片要求：泊松回归+贝叶斯+蒙特卡洛+特征工程)</div>
   <div class="advanced-check">
     <input type="checkbox" id="usePoissonReg" checked> <label for="usePoissonReg">📈 泊松回归特征建模 (log(λ)=β0+β1*homeElo+β2*awayElo)</label>
   </div>
@@ -1030,9 +1031,146 @@ async function startAI(){
   } catch(e){ showToast("预测失败"); } finally { hideLoading(); }
 }
 
-// 模拟比赛 (保留原样，因篇幅仅简写，实际需完整)
+// ==================== 完整的模拟比赛函数 (原样恢复) ====================
 function startSim() {
-  alert("模拟比赛功能已保留，完整代码请参考原文件。");
+  let hn = getHomeName(); let an = getAwayName();
+  if (!hn || !an || hn == an) { showToast("请选择有效球队"); return; }
+  clearInterval(simTimer); clearInterval(liveScoreTimer);
+  
+  liveScoreTimer = setInterval(updateLiveScore, 30000);
+  
+  let h = getTeam(hn); let a = getTeam(an);
+  let min = 0, hg = 0, ag = 0;
+  let hShot = 0, aShot = 0, hCorner = 0, aCorner = 0, hRed = 0, aRed = 0, hOff = 0, aOff = 0, hSave = 0, aSave = 0, hAssist = 0, aAssist = 0;
+  let hWood = 0, aWood = 0, hSub = 0, aSub = 0;
+  let hPass = 85, aPass = 82;
+  let hDist = 105, aDist = 103;
+  let hBall = Math.min(70, Math.max(30, 50 + (h.power - a.power)/5));
+  let aBall = 100 - hBall;
+  let homePlayers = h.players || ["球员A","球员B","球员C"];
+  let awayPlayers = a.players || ["球员X","球员Y","球员Z"];
+  let injuryTime = 0;
+  let varPending = false;
+
+  function updateStats() {
+    document.getElementById("ballHome").innerText = hBall+"%"; document.getElementById("ballAway").innerText = aBall+"%";
+    document.getElementById("shotHome").innerText = hShot; document.getElementById("shotAway").innerText = aShot;
+    document.getElementById("cornerHome").innerText = hCorner; document.getElementById("cornerAway").innerText = aCorner;
+    document.getElementById("redHome").innerText = hRed; document.getElementById("redAway").innerText = aRed;
+    document.getElementById("offsideHome").innerText = hOff; document.getElementById("offsideAway").innerText = aOff;
+    document.getElementById("saveHome").innerText = hSave; document.getElementById("saveAway").innerText = aSave;
+    document.getElementById("assistHome").innerText = hAssist; document.getElementById("assistAway").innerText = aAssist;
+    document.getElementById("woodHome").innerText = hWood; document.getElementById("woodAway").innerText = aWood;
+    document.getElementById("subHome").innerText = hSub; document.getElementById("subAway").innerText = aSub;
+    document.getElementById("passHome").innerText = hPass + "%"; document.getElementById("passAway").innerText = aPass + "%";
+    document.getElementById("distHome").innerText = hDist; document.getElementById("distAway").innerText = aDist;
+  }
+  updateStats();
+  document.getElementById("simTime").innerText = "00:00";
+  document.getElementById("simScore").innerText = "0 - 0";
+  document.getElementById("simEvent").innerText = "比赛开始";
+
+  simTimer = setInterval(() => {
+    if (min >= 90) {
+      if (injuryTime === 0) {
+        injuryTime = Math.floor(Math.random() * 6) + 1;
+        document.getElementById("simEvent").innerText = `⏱️ 伤停补时 ${injuryTime} 分钟`;
+      }
+      if (min >= 90 + injuryTime) {
+        clearInterval(simTimer); clearInterval(liveScoreTimer);
+        document.getElementById("simEvent").innerText = `全场比赛结束！最终比分 ${hg}-${ag}`;
+        let homeRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
+        let awayRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
+        document.getElementById("ratingContent").innerHTML = 
+          `<div class="home-rating">${hn} 门将:${homeRatings.gk} 后卫:${homeRatings.def} 中场:${homeRatings.mid} 前锋:${homeRatings.fwd}</div>
+           <div class="away-rating">${an} 门将:${awayRatings.gk} 后卫:${awayRatings.def} 中场:${awayRatings.mid} 前锋:${awayRatings.fwd}</div>
+           <div>最佳球员: ${Math.random()>0.5?homePlayers[0]:awayPlayers[0]}</div>`;
+        document.getElementById("ratingCard").style.display = "block";
+        return;
+      }
+    }
+    min++;
+    let displayMin = min > 90 ? 90 + (min-90) : min;
+    document.getElementById("simTime").innerText = displayMin < 10 ? "0" + displayMin + ":00" : displayMin + ":00";
+
+    let timeMultiplier = 1;
+    if (min >= 20 && min <= 35) timeMultiplier = 1.4;
+    else if (min >= 56 && min <= 75) timeMultiplier = 1.5;
+    else if (min >= 85) timeMultiplier = 1.8;
+    let goalH = 0.012 * (h.attack * h.home - a.defend) * timeMultiplier / 100;
+    let goalA = 0.012 * (a.attack * a.away - h.defend) * timeMultiplier / 100;
+    goalH = Math.max(0.002, goalH); goalA = Math.max(0.002, goalA);
+
+    let event = "";
+    let rand = Math.random();
+
+    if (!varPending && rand < 0.005 && min > 20 && min < 85) {
+      varPending = true;
+      event = `🖥️ VAR检查中... 可能涉及进球/点球/红牌`;
+      setTimeout(() => {
+        if (Math.random() < 0.3) {
+          event = `🖥️ VAR改判！进球无效/点球取消/红牌取消`;
+        } else {
+          event = `🖥️ VAR确认原判，比赛继续`;
+        }
+        varPending = false;
+        document.getElementById("simEvent").innerText = event;
+      }, 1500);
+    }
+    else if (rand < 0.01 && min > 10 && min < 85 && !varPending) {
+      if (Math.random() < 0.5) event = `${min}′ 点球！${hn}获得点球机会 (${homePlayers[0]})`;
+      else event = `${min}′ 点球！${an}获得点球机会 (${awayPlayers[1]})`;
+    }
+    else if (rand < 0.02 && min > 15 && !varPending) {
+      if (Math.random() < 0.5) { hRed++; event = `🔴 ${min}′ ${hn} ${homePlayers[2]} 被红牌罚下！`; } 
+      else { aRed++; event = `🔴 ${min}′ ${an} ${awayPlayers[0]} 被红牌罚下！`; }
+    }
+    else if (rand < 0.03 && !varPending) {
+      if (Math.random() < hBall/100) { hWood++; event = `🚀 ${min}′ ${hn} 射门击中门柱！`; } 
+      else { aWood++; event = `🚀 ${min}′ ${an} 射门击中门柱！`; }
+    }
+    else if (rand < 0.05 && !varPending) {
+      if (Math.random() < 0.5) { hOff++; event = `🚩 ${min}′ ${hn} 越位`; } 
+      else { aOff++; event = `🚩 ${min}′ ${an} 越位`; }
+    }
+    else if (rand < 0.08 && !varPending) {
+      if (Math.random() < hBall/100) {
+        hShot++; aSave++; event = `${min}′ ${hn} 射门，被${awayPlayers[2]}扑出！`;
+      } else {
+        aShot++; hSave++; event = `${min}′ ${an} 射门，被${homePlayers[1]}扑出！`;
+      }
+    }
+    else if (rand < 0.12 && !varPending) {
+      if (Math.random() < hBall/100) { hCorner++; event = `${min}′ ${hn} 角球`; } 
+      else { aCorner++; event = `${min}′ ${an} 角球`; }
+    }
+    else if (rand < 0.15 && min > 60 && !varPending) {
+      if (Math.random() < 0.5) { hSub++; event = `${min}′ ${hn} 换人，8号下，19号上`; } 
+      else { aSub++; event = `${min}′ ${an} 换人，7号下，11号上`; }
+    }
+    else if (Math.random() < goalH && !varPending) {
+      hg++; 
+      let scorer = homePlayers[Math.floor(Math.random()*homePlayers.length)];
+      let desc = Math.random()<0.3?"世界波！角度刁钻！":"推射破门";
+      event = `⚽ GOAL！${min}′ ${hn} 进球！ ${scorer} (${desc})`;
+      if (Math.random() < 0.3) { hAssist++; event += ` 助攻: ${homePlayers[1]}`; }
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+    else if (Math.random() < goalA && !varPending) {
+      ag++;
+      let scorer = awayPlayers[Math.floor(Math.random()*awayPlayers.length)];
+      let desc = Math.random()<0.3?"头球攻门！":"补射得分";
+      event = `⚽ GOAL！${min}′ ${an} 进球！ ${scorer} (${desc})`;
+      if (Math.random() < 0.3) { aAssist++; event += ` 助攻: ${awayPlayers[0]}`; }
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+
+    if (event) document.getElementById("simEvent").innerText = event;
+    hPass = Math.min(95, Math.max(70, hPass + (Math.random()*2-1)));
+    aPass = Math.min(95, Math.max(70, aPass + (Math.random()*2-1)));
+    hDist += Math.random()*0.5; aDist += Math.random()*0.5;
+    updateStats();
+  }, 500);
 }
 
 function showLineupEditor() {
@@ -1059,9 +1197,35 @@ function sharePrediction() {
 // 多语言支持
 let currentLang = 'zh';
 const langToggle = document.getElementById('langToggle');
+const langData = {
+  zh: {
+    siteTitle: '⚽ 足球AI大数据预测·旗舰满配版',
+    headerSub: '全球联赛·赔率·xG·天气·伤停·裁判·赛程·球员状态·转会·VAR·评分·机器学习修正',
+    themeToggle: '🌙 切换浅色模式',
+    langToggle: '🌐 English',
+    aiBtn: '🚀 AI深度预测 (含机器学习修正)',
+    simBtn: '🎮 开始模拟比赛 (1:1真实事件)',
+  },
+  en: {
+    siteTitle: '⚽ Football AI Prediction · Ultimate Edition',
+    headerSub: 'Global Leagues·Odds·xG·Weather·Injuries·Referee·Schedule·Player Form·Transfers·VAR·Ratings·ML',
+    themeToggle: '🌙 Toggle Light Mode',
+    langToggle: '🌐 中文',
+    aiBtn: '🚀 AI Prediction (with ML)',
+    simBtn: '🎮 Start Simulation (Live Events)',
+  }
+};
+function updateLang(lang) {
+  document.getElementById('siteTitle').innerText = langData[lang].siteTitle;
+  document.getElementById('headerSub').innerText = langData[lang].headerSub;
+  document.getElementById('themeToggle').innerText = langData[lang].themeToggle;
+  document.getElementById('langToggle').innerText = langData[lang].langToggle;
+  document.getElementById('aiBtn').innerText = langData[lang].aiBtn;
+  document.getElementById('simBtn').innerText = langData[lang].simBtn;
+}
 langToggle.addEventListener('click', () => {
   currentLang = currentLang === 'zh' ? 'en' : 'zh';
-  alert("语言切换演示，完整版可完善文本。");
+  updateLang(currentLang);
 });
 
 // 主题切换
