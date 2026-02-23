@@ -1183,13 +1183,20 @@ function runMonteCarlo() {
   document.getElementById('monteCarloResult').style.display = 'block';
 }
 
-// ==================== 增强版实时比赛模拟 ====================
+// ==================== 修复版实时比赛模拟 ====================
 function startSim() {
-  let hn = getHomeName(); let an = getAwayName();
-  if (!hn || !an || hn == an) { showToast("请选择有效球队"); return; }
-  clearInterval(simTimer); clearInterval(liveScoreTimer);
+  let hn = getHomeName(); 
+  let an = getAwayName();
+  if (!hn || !an || hn == an) { 
+    showToast("请选择有效球队"); 
+    return; 
+  }
+  // 清除之前的定时器
+  if (simTimer) clearInterval(simTimer);
+  if (liveScoreTimer) clearInterval(liveScoreTimer);
   
-  let h = getTeam(hn); let a = getTeam(an);
+  let h = getTeam(hn); 
+  let a = getTeam(an);
   let min = 0, hg = 0, ag = 0;
   let hShot = 0, aShot = 0, hShotOn = 0, aShotOn = 0;
   let hCorner = 0, aCorner = 0;
@@ -1208,14 +1215,12 @@ function startSim() {
   // 战术变量
   let homeTactics = h.tactics || '控球';
   let awayTactics = a.tactics || '反击';
-  let homeAggressive = 1.0; // 进攻系数
+  let homeAggressive = 1.0;
   let awayAggressive = 1.0;
   
-  // 明星球员（假设前两位是核心）
   let homeStar = homePlayers[0];
   let awayStar = awayPlayers[0];
   
-  // 实时更新函数
   function updateStats() {
     document.getElementById("ballHome").innerText = Math.round(hBall)+"%";
     document.getElementById("ballAway").innerText = Math.round(aBall)+"%";
@@ -1240,6 +1245,7 @@ function startSim() {
     document.getElementById("distHome").innerText = Math.round(hDist);
     document.getElementById("distAway").innerText = Math.round(aDist);
   }
+  
   updateStats();
   document.getElementById("simTime").innerText = "00:00";
   document.getElementById("simScore").innerText = "0 - 0";
@@ -1248,13 +1254,13 @@ function startSim() {
   simTimer = setInterval(() => {
     if (min >= 90) {
       if (injuryTime === 0) {
-        injuryTime = Math.floor(Math.random() * 5) + 1; // 1-5分钟补时
+        injuryTime = Math.floor(Math.random() * 5) + 1;
         document.getElementById("simEvent").innerText = `⏱️ 伤停补时 ${injuryTime} 分钟`;
       }
       if (min >= 90 + injuryTime) {
         clearInterval(simTimer);
         document.getElementById("simEvent").innerText = `全场比赛结束！最终比分 ${hg}-${ag}`;
-        // 赛后评分...
+        // 赛后评分
         let homeRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
         let awayRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
         document.getElementById("ratingContent").innerHTML = 
@@ -1271,8 +1277,8 @@ function startSim() {
     
     // 根据比分调整战术
     if (hg > ag) {
-      homeAggressive = 0.8; // 领先收缩
-      awayAggressive = 1.3; // 落后狂攻
+      homeAggressive = 0.8;
+      awayAggressive = 1.3;
     } else if (ag > hg) {
       homeAggressive = 1.3;
       awayAggressive = 0.8;
@@ -1280,16 +1286,13 @@ function startSim() {
       homeAggressive = 1.0;
       awayAggressive = 1.0;
     }
-    // 红牌影响
     if (hRed > 0) homeAggressive *= 0.7;
     if (aRed > 0) awayAggressive *= 0.7;
     
-    // 控球率动态
     let basePoss = 50 + (h.power - a.power) * 0.2;
     hBall = basePoss * homeAggressive / (homeAggressive + awayAggressive) * 2;
     aBall = 100 - hBall;
     
-    // 事件概率（基于xG和战术）
     let homeShotProb = 0.02 * (h.attack/80) * homeAggressive;
     let awayShotProb = 0.02 * (a.attack/80) * awayAggressive;
     let homeCornerProb = 0.01 * (h.attack/80) * homeAggressive;
@@ -1300,19 +1303,15 @@ function startSim() {
     let event = "";
     let rand = Math.random();
     
-    // 射门事件
     if (rand < homeShotProb) {
       hShot++;
-      // 射正概率（基于进攻和防守）
       let onTargetProb = 0.35 + (h.attack - a.defend) / 200;
       if (Math.random() < onTargetProb) {
         hShotOn++;
-        // 扑救概率
         if (Math.random() < 0.2 + aSave/50) {
           aSave++;
           event = `${min}′ ${hn} 射正，被${awayPlayers[2]||'门将'}扑出！`;
         } else {
-          // 进球
           hg++;
           let scorer = Math.random()<0.7 ? homeStar : homePlayers[1];
           event = `⚽ GOAL！${min}′ ${hn} 进球！ ${scorer}`;
@@ -1320,13 +1319,11 @@ function startSim() {
           document.getElementById("simScore").innerText = `${hg} - ${ag}`;
         }
       } else {
-        // 射偏或被封堵
         if (Math.random()<0.1) { hWood++; event = `${min}′ ${hn} 射门击中门柱！`; }
         else event = `${min}′ ${hn} 射门偏出。`;
       }
     }
     else if (rand < homeShotProb + awayShotProb) {
-      // 客队射门（对称逻辑）
       aShot++;
       let onTargetProb = 0.35 + (a.attack - h.defend) / 200;
       if (Math.random() < onTargetProb) {
@@ -1354,13 +1351,11 @@ function startSim() {
     }
     else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb) {
       if (Math.random()<0.2) { hOff++; event = `${min}′ ${hn} 越位。`; }
-      else { /* 犯规，可能黄牌 */ }
     }
     else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb + awayFoulProb) {
       if (Math.random()<0.2) { aOff++; event = `${min}′ ${an} 越位。`; }
     }
     
-    // 明星球员特殊时刻
     if (!event && Math.random() < 0.002 * homeAggressive) {
       event = `✨ ${homeStar} 个人突破，制造威胁！`;
     }
@@ -1368,7 +1363,6 @@ function startSim() {
       event = `✨ ${awayStar} 个人突破，制造威胁！`;
     }
     
-    // VAR事件
     if (!varPending && Math.random() < 0.001 && min > 20 && min < 85) {
       varPending = true;
       event = `🖥️ VAR检查中... (疑似点球/越位)`;
@@ -1382,13 +1376,12 @@ function startSim() {
     
     if (event) document.getElementById("simEvent").innerText = event;
     
-    // 更新其他统计
     hPass = Math.min(95, Math.max(70, hPass + (Math.random()*2-1) + (homeAggressive-1)*2));
     aPass = Math.min(95, Math.max(70, aPass + (Math.random()*2-1) + (awayAggressive-1)*2));
     hDist += Math.random()*0.3 + homeAggressive*0.1;
     aDist += Math.random()*0.3 + awayAggressive*0.1;
     updateStats();
-  }, 800); // 略慢一点便于观察
+  }, 800);
 }
 
 // ==================== 增强版 startAI 函数 (整合所有新增特性) ====================
