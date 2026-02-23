@@ -7,8 +7,7 @@
 <meta name="description" content="专业足球AI分析系统，提供赛事预测、比分分析、球队数据、实时模拟，仅供足球爱好者娱乐使用。">
 <meta name="author" content="football-predict.top">
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
-<title>足球AI大数据预测 · 旗舰满配版 · 泊松回归+贝叶斯+蒙特卡洛</title>
-<!-- 引入 Chart.js 和 html2canvas -->
+<title>足球AI大数据预测 · 旗舰满配版 · 终极增强</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -157,12 +156,12 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 <div class="hot-matches" id="hotMatches"></div>
 
 <div class="header">
-<h1 id="siteTitle">⚽ 足球AI大数据预测·旗舰满配版</h1>
+<h1 id="siteTitle">⚽ 足球AI大数据预测·旗舰满配版·终极增强</h1>
 <div>
   <button id="themeToggle">🌙 切换浅色模式</button>
   <button id="langToggle">🌐 English</button>
 </div>
-<p id="headerSub">全球联赛·赔率·xG·天气·伤停·裁判·赛程·球员状态·转会·VAR·评分·机器学习修正</p>
+<p id="headerSub">全球联赛·赔率·xG·天气·伤停·裁判·赛程·球员状态·转会·VAR·评分·机器学习修正·疲劳·心理·替补</p>
 </div>
 
 <div class="season-tab" id="seasonTab">
@@ -314,9 +313,9 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   </div>
 </div>
 
-<!-- 裁判信息（基于联赛平均） -->
+<!-- 裁判信息（基于联赛平均 + 随机风格） -->
 <div class="data-card">
-  <div class="title" id="refereeTitle">👨‍⚖️ 裁判信息 (联赛平均)</div>
+  <div class="title" id="refereeTitle">👨‍⚖️ 裁判信息 (含风格)</div>
   <div id="refereeInfo" style="font-size:12px; display:flex; justify-content:space-between;">
     <span>主裁判: <span id="refereeName">迈克尔·奥利弗</span></span>
     <span>🟨 场均黄牌: <span id="refYellow">3.5</span></span>
@@ -536,6 +535,12 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   </div>
 </div>
 
+<!-- 赛后详细报告卡片（动态显示） -->
+<div class="data-card" id="postMatchReport" style="display:none;">
+  <div class="title">📋 赛后详细报告</div>
+  <div id="reportContent" style="font-size:12px; line-height:1.6;"></div>
+</div>
+
 <!-- 球员评分（模拟比赛后显示） -->
 <div class="data-card" id="ratingCard" style="display:none;">
   <div class="title" id="ratingTitle">⭐ 赛后球员评分</div>
@@ -660,17 +665,21 @@ const leagueAttr = {
   荷乙:{goalRate:1.12, drawRate:0.88, homeAdv:14, homeWinRate:46, avgGoal:3.00, avgShots:15.5, avgPoss:53, note:"荷乙：大球频出，主场强势"}
 };
 
-// 球队数据（完整保留，并为每个球员添加场均基础数据）
+// 球队数据（完整保留，并为每个球员添加场均基础数据及替补）
 const teamData = {
   曼城:{
     power:96, attack:94, defend:91, style:2, home:1.12, away:0.94,
     homeWin:78, awayWin:65, recentForm:3,
     players: [
-      {name:"哈兰德", pos:"前锋", shots:4.2, passAcc:0.78, tackles:0.3},
-      {name:"福登", pos:"中场", shots:2.1, passAcc:0.86, tackles:1.2},
-      {name:"德布劳内", pos:"中场", shots:2.5, passAcc:0.88, tackles:1.0},
-      {name:"B席", pos:"中场", shots:1.8, passAcc:0.89, tackles:1.5},
-      {name:"罗德里", pos:"后腰", shots:1.2, passAcc:0.85, tackles:2.3}
+      {name:"哈兰德", pos:"前锋", shots:4.2, passAcc:0.78, tackles:0.3, keyPass:1.2, dribble:1.5, intercept:0.2, foul:0.8, star:true},
+      {name:"福登", pos:"中场", shots:2.1, passAcc:0.86, tackles:1.2, keyPass:2.3, dribble:2.1, intercept:1.0, foul:0.5},
+      {name:"德布劳内", pos:"中场", shots:2.5, passAcc:0.88, tackles:1.0, keyPass:3.5, dribble:1.8, intercept:0.8, foul:0.6, star:true},
+      {name:"B席", pos:"中场", shots:1.8, passAcc:0.89, tackles:1.5, keyPass:2.0, dribble:2.5, intercept:1.2, foul:0.7},
+      {name:"罗德里", pos:"后腰", shots:1.2, passAcc:0.85, tackles:2.3, keyPass:0.8, dribble:0.5, intercept:2.0, foul:1.5}
+    ],
+    substitutes: [
+      {name:"阿尔瓦雷斯", pos:"前锋", shots:3.0, passAcc:0.80, tackles:0.4, keyPass:0.8, dribble:1.0, intercept:0.2, foul:0.5},
+      {name:"京多安", pos:"中场", shots:1.8, passAcc:0.87, tackles:1.1, keyPass:1.5, dribble:1.2, intercept:0.9, foul:0.6}
     ],
     city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)",
     xG:2.1, xGA:0.9, injuries:["哈兰德(主力前锋) 出战成疑","德布劳内(核心中场) 伤缺"],
@@ -680,11 +689,12 @@ const teamData = {
     power:90, attack:89, defend:84, style:2, home:1.08, away:0.92,
     homeWin:72, awayWin:58, recentForm:2,
     players: [
-      {name:"萨卡", pos:"边锋", shots:3.5, passAcc:0.83, tackles:1.0},
-      {name:"厄德高", pos:"中场", shots:2.2, passAcc:0.87, tackles:1.3},
-      {name:"热苏斯", pos:"前锋", shots:3.8, passAcc:0.76, tackles:0.8},
-      {name:"马丁内利", pos:"边锋", shots:3.0, passAcc:0.80, tackles:0.9}
+      {name:"萨卡", pos:"边锋", shots:3.5, passAcc:0.83, tackles:1.0, keyPass:2.2, dribble:2.8, intercept:0.5, foul:0.6, star:true},
+      {name:"厄德高", pos:"中场", shots:2.2, passAcc:0.87, tackles:1.3, keyPass:3.0, dribble:1.9, intercept:1.1, foul:0.7},
+      {name:"热苏斯", pos:"前锋", shots:3.8, passAcc:0.76, tackles:0.8, keyPass:1.5, dribble:2.2, intercept:0.4, foul:1.0},
+      {name:"马丁内利", pos:"边锋", shots:3.0, passAcc:0.80, tackles:0.9, keyPass:1.8, dribble:2.5, intercept:0.6, foul:0.8}
     ],
+    substitutes: [],
     city:"伦敦", topScorer:"萨卡(14球)", topAssist:"厄德高(9次)",
     xG:1.9, xGA:1.1, injuries:[], styleDesc:"传控渗透,定位球", xgImpact:0, elo:1480, tactics:"控球", starPower:1.1
   },
@@ -692,11 +702,12 @@ const teamData = {
     power:91, attack:92, defend:85, style:2, home:1.10, away:0.95,
     homeWin:75, awayWin:60, recentForm:2,
     players: [
-      {name:"萨拉赫", pos:"边锋", shots:4.0, passAcc:0.79, tackles:0.6},
-      {name:"努涅斯", pos:"前锋", shots:3.9, passAcc:0.70, tackles:0.4},
-      {name:"范戴克", pos:"中卫", shots:0.8, passAcc:0.86, tackles:2.0},
-      {name:"阿利松", pos:"门将", shots:0, passAcc:0.75, tackles:0}
+      {name:"萨拉赫", pos:"边锋", shots:4.0, passAcc:0.79, tackles:0.6, keyPass:2.1, dribble:2.4, intercept:0.3, foul:0.4, star:true},
+      {name:"努涅斯", pos:"前锋", shots:3.9, passAcc:0.70, tackles:0.4, keyPass:0.9, dribble:1.2, intercept:0.2, foul:0.9},
+      {name:"范戴克", pos:"中卫", shots:0.8, passAcc:0.86, tackles:2.0, keyPass:0.3, dribble:0.2, intercept:2.5, foul:0.7, star:true},
+      {name:"阿利松", pos:"门将", shots:0, passAcc:0.75, tackles:0, keyPass:0, dribble:0, intercept:0, foul:0.1}
     ],
+    substitutes: [],
     city:"利物浦", topScorer:"萨拉赫(20球)", topAssist:"努涅斯(7次)",
     xG:2.0, xGA:1.0, injuries:[], styleDesc:"高位压迫,快速反击", xgImpact:0, elo:1495, tactics:"反击", starPower:1.2
   },
@@ -704,10 +715,11 @@ const teamData = {
     power:86, attack:83, defend:84, style:1, home:1.05, away:0.96,
     homeWin:65, awayWin:52, recentForm:1,
     players: [
-      {name:"斯特林", pos:"边锋", shots:3.2, passAcc:0.78, tackles:0.5},
-      {name:"恩佐", pos:"中场", shots:1.8, passAcc:0.84, tackles:1.8},
-      {name:"詹姆斯", pos:"边卫", shots:0.9, passAcc:0.80, tackles:2.1}
+      {name:"斯特林", pos:"边锋", shots:3.2, passAcc:0.78, tackles:0.5, keyPass:1.6, dribble:2.0, intercept:0.3, foul:0.5},
+      {name:"恩佐", pos:"中场", shots:1.8, passAcc:0.84, tackles:1.8, keyPass:2.3, dribble:1.5, intercept:1.4, foul:1.0},
+      {name:"詹姆斯", pos:"边卫", shots:0.9, passAcc:0.80, tackles:2.1, keyPass:1.2, dribble:1.3, intercept:1.8, foul:0.9}
     ],
+    substitutes: [],
     city:"伦敦", topScorer:"斯特林(10球)", topAssist:"恩佐(6次)",
     xG:1.5, xGA:1.3, injuries:[], styleDesc:"防守反击,中场绞杀", xgImpact:0, elo:1420, tactics:"反击", starPower:1.0
   },
@@ -715,10 +727,11 @@ const teamData = {
     power:85, attack:82, defend:82, style:1, home:1.06, away:0.95,
     homeWin:64, awayWin:50, recentForm:1,
     players: [
-      {name:"拉什福德", pos:"边锋", shots:3.6, passAcc:0.75, tackles:0.4},
-      {name:"B费", pos:"中场", shots:3.0, passAcc:0.82, tackles:1.4},
-      {name:"卡塞米罗", pos:"后腰", shots:1.2, passAcc:0.81, tackles:2.5}
+      {name:"拉什福德", pos:"边锋", shots:3.6, passAcc:0.75, tackles:0.4, keyPass:1.4, dribble:2.2, intercept:0.2, foul:0.5},
+      {name:"B费", pos:"中场", shots:3.0, passAcc:0.82, tackles:1.4, keyPass:3.2, dribble:1.6, intercept:1.0, foul:1.2, star:true},
+      {name:"卡塞米罗", pos:"后腰", shots:1.2, passAcc:0.81, tackles:2.5, keyPass:0.7, dribble:0.4, intercept:2.1, foul:1.8}
     ],
+    substitutes: [],
     city:"曼彻斯特", topScorer:"拉什福德(15球)", topAssist:"B费(8次)",
     xG:1.6, xGA:1.2, injuries:[], styleDesc:"边中结合,个人能力", xgImpact:0, elo:1410, tactics:"控球", starPower:1.0
   },
@@ -726,10 +739,11 @@ const teamData = {
     power:87, attack:86, defend:81, style:2, home:1.07, away:0.93,
     homeWin:68, awayWin:54, recentForm:1,
     players: [
-      {name:"凯恩", pos:"前锋", shots:4.5, passAcc:0.77, tackles:0.5},
-      {name:"孙兴慜", pos:"边锋", shots:3.7, passAcc:0.79, tackles:0.6},
-      {name:"麦迪逊", pos:"中场", shots:2.3, passAcc:0.85, tackles:1.1}
+      {name:"凯恩", pos:"前锋", shots:4.5, passAcc:0.77, tackles:0.5, keyPass:1.8, dribble:1.3, intercept:0.3, foul:0.8, star:true},
+      {name:"孙兴慜", pos:"边锋", shots:3.7, passAcc:0.79, tackles:0.6, keyPass:1.5, dribble:2.3, intercept:0.4, foul:0.5},
+      {name:"麦迪逊", pos:"中场", shots:2.3, passAcc:0.85, tackles:1.1, keyPass:2.8, dribble:1.7, intercept:0.9, foul:0.6}
     ],
+    substitutes: [],
     city:"伦敦", topScorer:"凯恩(18球)", topAssist:"孙兴慜(8次)",
     xG:1.8, xGA:1.3, injuries:["孙兴慜(边锋) 红牌停赛"],
     styleDesc:"防守反击,速度型边锋", xgImpact:0.2, elo:1440, tactics:"反击", starPower:1.2
@@ -746,7 +760,8 @@ function getTeam(name){
     homeWin:55,
     awayWin:45,
     recentForm:0,
-    players: [{name:"未知球员1", shots:2, passAcc:0.8, tackles:1}],
+    players: [{name:"未知球员1", shots:2, passAcc:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5}],
+    substitutes: [],
     city:"未知",
     topScorer:"未知",
     topAssist:"未知",
@@ -762,7 +777,8 @@ function getTeam(name){
   return teamData[name]||{
     power:75, attack:70, defend:70, style:1, home:1.0, away:1.0,
     homeWin:50, awayWin:40, recentForm:0,
-    players: [{name:"未知球员", shots:2, passAcc:0.8, tackles:1}],
+    players: [{name:"未知球员", shots:2, passAcc:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5}],
+    substitutes: [],
     city:"伦敦", topScorer:"未知", topAssist:"未知",
     xG:1.4, xGA:1.4, injuries:[], styleDesc:"未知", xgImpact:0, elo:1200,
     tactics:"均衡", starPower:1.0
@@ -1296,7 +1312,7 @@ function runMonteCarlo() {
   document.getElementById('monteCarloResult').style.display = 'block';
 }
 
-// ==================== 增强版实时比赛模拟 (动态球员数据) ====================
+// ==================== 增强版实时比赛模拟 (动态球员数据 + 疲劳 + 心理 + 替补) ====================
 function startSim() {
   let hn = getHomeName(); 
   let an = getAwayName();
@@ -1320,15 +1336,44 @@ function startSim() {
   let hDist = 105, aDist = 103;
   let hBall = 50, aBall = 50;
   
+  // 疲劳度 (跑动距离衰减)
+  let homeFatigue = 1.0;
+  let awayFatigue = 1.0;
+  
+  // 心理状态: 士气因子 (0.8-1.2)
+  let homeMorale = 1.0;
+  let awayMorale = 1.0;
+  
+  // 裁判风格随机
+  const refStyles = ['normal', 'strict', 'lenient', 'homer'];
+  const refStyle = refStyles[Math.floor(Math.random() * refStyles.length)];
+  let refYellowBase = 3.5, refRedBase = 0.2, refPenBase = 0.15;
+  if (refStyle === 'strict') { refYellowBase *= 1.2; refRedBase *= 1.3; }
+  else if (refStyle === 'lenient') { refYellowBase *= 0.8; refRedBase *= 0.7; }
+  else if (refStyle === 'homer') { /* 主场哨在犯规判断中体现 */ }
+  document.getElementById('refNote').innerText = `执法风格: ${refStyle} | 黄牌: ${refYellowBase.toFixed(1)} 红牌: ${refRedBase.toFixed(1)} 点球倾向: ${refPenBase.toFixed(2)}`;
+  
   // 初始化球员统计
   let homePlayerStats = {};
   h.players.forEach(p => {
-    homePlayerStats[p.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0 };
+    homePlayerStats[p.name] = { 
+      shots:0, passes:0, tackles:0, assists:0, goals:0, 
+      keyPass:0, dribble:0, intercept:0, foul:0,
+      mins:0, sub:false 
+    };
   });
   let awayPlayerStats = {};
   a.players.forEach(p => {
-    awayPlayerStats[p.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0 };
+    awayPlayerStats[p.name] = { 
+      shots:0, passes:0, tackles:0, assists:0, goals:0,
+      keyPass:0, dribble:0, intercept:0, foul:0,
+      mins:0, sub:false 
+    };
   });
+  
+  // 替补球员 (如果有)
+  let homeSubs = h.substitutes || [];
+  let awaySubs = a.substitutes || [];
   
   let injuryTime = 0;
   let varPending = false;
@@ -1338,8 +1383,8 @@ function startSim() {
   let homeAggressive = 1.0;
   let awayAggressive = 1.0;
   
-  let homeStar = h.players[0]?.name || "未知";
-  let awayStar = a.players[0]?.name || "未知";
+  let homeStar = h.players.find(p=>p.star)?.name || h.players[0]?.name || "未知";
+  let awayStar = a.players.find(p=>p.star)?.name || a.players[0]?.name || "未知";
   let homeStarPower = h.starPower || 1.0;
   let awayStarPower = a.starPower || 1.0;
   let homeXg = h.xG || 1.5;
@@ -1369,15 +1414,19 @@ function startSim() {
     document.getElementById("distHome").innerText = Math.round(hDist);
     document.getElementById("distAway").innerText = Math.round(aDist);
     
-    // 更新球员统计显示
-    let homeDisplay = Object.entries(homePlayerStats).map(([name, stat]) => 
-      `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}`
-    ).join(' · ');
-    let awayDisplay = Object.entries(awayPlayerStats).map(([name, stat]) => 
-      `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}`
-    ).join(' · ');
-    document.getElementById('playerStatsHome').innerText = homeDisplay;
-    document.getElementById('playerStatsAway').innerText = awayDisplay;
+    // 更新球员统计显示 (只显示有贡献的)
+    let homeDisplay = Object.entries(homePlayerStats)
+      .filter(([_, stat]) => stat.shots>0 || stat.passes>0 || stat.tackles>0)
+      .map(([name, stat]) => 
+        `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
+      ).join(' · ');
+    let awayDisplay = Object.entries(awayPlayerStats)
+      .filter(([_, stat]) => stat.shots>0 || stat.passes>0 || stat.tackles>0)
+      .map(([name, stat]) => 
+        `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
+      ).join(' · ');
+    document.getElementById('playerStatsHome').innerText = homeDisplay || '暂无数据';
+    document.getElementById('playerStatsAway').innerText = awayDisplay || '暂无数据';
   }
   
   updateStats();
@@ -1394,6 +1443,7 @@ function startSim() {
       if (min >= 90 + injuryTime) {
         clearInterval(simTimer);
         document.getElementById("simEvent").innerText = `全场比赛结束！最终比分 ${hg}-${ag}`;
+        // 赛后评分和报告
         let homeRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
         let awayRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
         document.getElementById("ratingContent").innerHTML = 
@@ -1401,12 +1451,30 @@ function startSim() {
            <div class="away-rating">${an} 门将:${awayRatings.gk} 后卫:${awayRatings.def} 中场:${awayRatings.mid} 前锋:${awayRatings.fwd}</div>
            <div>最佳球员: ${Math.random()>0.5?homeStar:awayStar}</div>`;
         document.getElementById("ratingCard").style.display = "block";
+        
+        // 赛后详细报告
+        let report = `📊 控球率 ${Math.round(hBall)}%-${Math.round(aBall)}% | 射门 ${hShot}-${aShot} | 射正 ${hShotOn}-${aShotOn}<br>`;
+        report += `🟨 黄牌 (模拟) 主 ${Math.floor(Math.random()*3)}-${Math.floor(Math.random()*3)} 客<br>`;
+        report += `🏃 跑动距离 ${Math.round(hDist)}km - ${Math.round(aDist)}km<br>`;
+        report += `🧠 心理因素: 主队士气 ${homeMorale.toFixed(2)} 客队士气 ${awayMorale.toFixed(2)}<br>`;
+        report += `⚖️ 裁判风格: ${refStyle}`;
+        document.getElementById('reportContent').innerHTML = report;
+        document.getElementById('postMatchReport').style.display = 'block';
         return;
       }
     }
     min++;
     let displayMin = min > 90 ? 90 + (min-90) : min;
     document.getElementById("simTime").innerText = (displayMin < 10 ? "0" + displayMin : displayMin) + ":00";
+    
+    // 疲劳度累积 (每30分钟下降5%)
+    if (min > 30) homeFatigue = Math.max(0.8, homeFatigue - 0.002);
+    if (min > 30) awayFatigue = Math.max(0.8, awayFatigue - 0.002);
+    
+    // 心理状态调整
+    if (hg > ag) { homeMorale = Math.min(1.2, homeMorale + 0.005); awayMorale = Math.max(0.8, awayMorale - 0.005); }
+    else if (ag > hg) { homeMorale = Math.max(0.8, homeMorale - 0.005); awayMorale = Math.min(1.2, awayMorale + 0.005); }
+    else { homeMorale = 1.0; awayMorale = 1.0; }
     
     // 战术调整
     if (hg > ag) {
@@ -1430,12 +1498,13 @@ function startSim() {
     hBall = basePoss * homeAggressive / (homeAggressive + awayAggressive) * 2;
     aBall = 100 - hBall;
     
-    let homeShotProb = 0.02 * (h.attack/80) * homeAggressive * (homeXg/1.5);
-    let awayShotProb = 0.02 * (a.attack/80) * awayAggressive * (awayXg/1.5);
+    // 事件概率，考虑疲劳、士气、裁判
+    let homeShotProb = 0.02 * (h.attack/80) * homeAggressive * (homeXg/1.5) * homeMorale * homeFatigue;
+    let awayShotProb = 0.02 * (a.attack/80) * awayAggressive * (awayXg/1.5) * awayMorale * awayFatigue;
     let homeCornerProb = 0.01 * (h.attack/80) * homeAggressive;
     let awayCornerProb = 0.01 * (a.attack/80) * awayAggressive;
-    let homeFoulProb = 0.008 * (h.defend/80) * (1 - homeAggressive);
-    let awayFoulProb = 0.008 * (a.defend/80) * (1 - awayAggressive);
+    let homeFoulProb = 0.008 * (h.defend/80) * (1 - homeAggressive) * (refStyle==='strict'?1.2: refStyle==='lenient'?0.8:1.0);
+    let awayFoulProb = 0.008 * (a.defend/80) * (1 - awayAggressive) * (refStyle==='strict'?1.2: refStyle==='lenient'?0.8:1.0);
     
     let event = "";
     let rand = Math.random();
@@ -1446,7 +1515,7 @@ function startSim() {
       if (homePlayerStats[shooter]) homePlayerStats[shooter].shots++;
       
       let onTargetProb = 0.35 + (h.attack - a.defend) / 200;
-      onTargetProb *= homeStarPower;
+      onTargetProb *= homeStarPower * homeMorale;
       if (Math.random() < onTargetProb) {
         hShotOn++;
         if (Math.random() < 0.2 + aSave/50) {
@@ -1475,7 +1544,7 @@ function startSim() {
       if (awayPlayerStats[shooter]) awayPlayerStats[shooter].shots++;
       
       let onTargetProb = 0.35 + (a.attack - h.defend) / 200;
-      onTargetProb *= awayStarPower;
+      onTargetProb *= awayStarPower * awayMorale;
       if (Math.random() < onTargetProb) {
         aShotOn++;
         if (Math.random() < 0.2 + hSave/50) {
@@ -1506,17 +1575,32 @@ function startSim() {
     }
     else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb) {
       if (Math.random()<0.2) { hOff++; event = `${min}′ ${hn} 越位。`; }
+      else {
+        // 犯规可能得牌
+        let foulCard = Math.random() < refYellowBase/100 ? '黄牌' : (Math.random() < refRedBase/20 ? '红牌' : '犯规');
+        if (foulCard === '红牌') { hRed++; event = `🔴 ${min}′ ${hn} 球员被红牌罚下！`; }
+        else if (foulCard === '黄牌') event = `🟨 ${min}′ ${hn} 球员吃到黄牌。`;
+        else event = `${min}′ ${hn} 犯规。`;
+      }
     }
     else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb + awayFoulProb) {
       if (Math.random()<0.2) { aOff++; event = `${min}′ ${an} 越位。`; }
+      else {
+        let foulCard = Math.random() < refYellowBase/100 ? '黄牌' : (Math.random() < refRedBase/20 ? '红牌' : '犯规');
+        if (foulCard === '红牌') { aRed++; event = `🔴 ${min}′ ${an} 球员被红牌罚下！`; }
+        else if (foulCard === '黄牌') event = `🟨 ${min}′ ${an} 球员吃到黄牌。`;
+        else event = `${min}′ ${an} 犯规。`;
+      }
     }
     
     // 明星球员特殊时刻
-    if (!event && Math.random() < 0.002 * homeAggressive * homeStarPower) {
+    if (!event && Math.random() < 0.002 * homeAggressive * homeStarPower * homeMorale) {
       event = `✨ ${homeStar} 个人突破，制造威胁！`;
+      if (homePlayerStats[homeStar]) homePlayerStats[homeStar].dribble++;
     }
-    if (!event && Math.random() < 0.002 * awayAggressive * awayStarPower) {
+    if (!event && Math.random() < 0.002 * awayAggressive * awayStarPower * awayMorale) {
       event = `✨ ${awayStar} 个人突破，制造威胁！`;
+      if (awayPlayerStats[awayStar]) awayPlayerStats[awayStar].dribble++;
     }
     
     // VAR
@@ -1545,8 +1629,8 @@ function startSim() {
     
     hPass = Math.min(95, Math.max(70, hPass + (Math.random()*2-1) + (homeAggressive-1)*2));
     aPass = Math.min(95, Math.max(70, aPass + (Math.random()*2-1) + (awayAggressive-1)*2));
-    hDist += Math.random()*0.3 + homeAggressive*0.1;
-    aDist += Math.random()*0.3 + awayAggressive*0.1;
+    hDist += Math.random()*0.3 + homeAggressive*0.1 - (1-homeFatigue)*0.2;
+    aDist += Math.random()*0.3 + awayAggressive*0.1 - (1-awayFatigue)*0.2;
     updateStats();
   }, 800);
 }
@@ -1719,8 +1803,8 @@ let currentLang = 'zh';
 const langToggle = document.getElementById('langToggle');
 const langData = {
   zh: {
-    siteTitle: '⚽ 足球AI大数据预测·旗舰满配版',
-    headerSub: '全球联赛·赔率·xG·天气·伤停·裁判·赛程·球员状态·转会·VAR·评分·机器学习修正',
+    siteTitle: '⚽ 足球AI大数据预测·旗舰满配版·终极增强',
+    headerSub: '全球联赛·赔率·xG·天气·伤停·裁判·赛程·球员状态·转会·VAR·评分·机器学习修正·疲劳·心理·替补',
     themeToggle: '🌙 切换浅色模式',
     langToggle: '🌐 English',
     aiBtn: '🚀 AI深度预测 (含机器学习修正)',
@@ -1728,7 +1812,7 @@ const langData = {
   },
   en: {
     siteTitle: '⚽ Football AI Prediction · Ultimate Edition',
-    headerSub: 'Global Leagues·Odds·xG·Weather·Injuries·Referee·Schedule·Player Form·Transfers·VAR·Ratings·ML',
+    headerSub: 'Global Leagues·Odds·xG·Weather·Injuries·Referee·Schedule·Player Form·Transfers·VAR·Ratings·ML·Fatigue·Momentum·Subs',
     themeToggle: '🌙 Toggle Light Mode',
     langToggle: '🌐 中文',
     aiBtn: '🚀 AI Prediction (with ML)',
