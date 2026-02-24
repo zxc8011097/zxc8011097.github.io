@@ -151,6 +151,7 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 .shot-chart { height:100px; width:100%; margin-top:8px; }
 .error-heatmap { display:grid; grid-template-columns:repeat(5,1fr); gap:2px; font-size:10px; text-align:center; }
 .error-heatmap div { background:#131b2e; padding:4px; border-radius:4px; }
+.mc-extra-detail { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:11px; color:#FFD700; }
 </style>
 </head>
 <body>
@@ -416,7 +417,12 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
     <div style="color:#FFD700; margin-bottom:6px;">📊 蒙特卡洛模拟 (前5比分)</div>
     <div id="mcScores" class="mc-table"></div>
     <div style="margin-top:6px;" id="mcWinDrawLose"></div>
-    <div id="mcExtra" style="font-size:11px; margin-top:6px; color:#ccc;">⚽ 双方均进球概率 --% | 总进球≥3概率 --%</div>
+    <div class="mc-extra-detail" id="mcExtraDetail">
+      <span>⚽ 双方进球 <span id="mcBoth">--%</span></span>
+      <span>📈 大2.5 <span id="mcOver">--%</span></span>
+      <span>⏱️ 上半场最可能 <span id="mcHalf">--</span></span>
+    </div>
+    <div id="mcExtra" style="font-size:11px; margin-top:6px; color:#ccc;"></div>
   </div>
 </div>
 
@@ -433,15 +439,17 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   </div>
 </div>
 
-<!-- AI比分预测区域 + 比赛预测时间轴 -->
+<!-- AI比分预测区域 + 比赛预测时间轴 + 增强推荐 -->
 <div class="data-card" id="predictionCard">
-<div class="title" id="scoreTitle">🎯 AI精准比分（双变量泊松+机器学习修正）</div>
+<div class="title" id="scoreTitle">🎯 AI精准比分（双变量泊松+蒙特卡洛融合）</div>
 <div class="ai-score" id="aiScore">— : —</div>
 <div class="score-group">
 <div class="score-item"><div class="num" id="s1">—</div><div class="tag" id="prob1">--</div></div>
 <div class="score-item"><div class="num" id="s2">—</div><div class="tag" id="prob2">--</div></div>
 <div class="score-item"><div class="num" id="s3">—</div><div class="tag" id="prob3">--</div></div>
 </div>
+<!-- 新增冷门推荐 -->
+<div style="margin-top:4px; font-size:11px; color:#FF8C00;" id="coldScore">🔥 冷门关注: 暂无</div>
 <!-- 比赛预测时间轴 -->
 <div class="pro-detail" style="margin-top:8px;">
   <div class="item"><span class="label">⏱️ 进球预测时间轴：</span><span class="value" id="timeAxis"></span></div>
@@ -653,6 +661,7 @@ let liveScoreTimer;
 let customHome = "";
 let customAway = "";
 let isCustom = false;
+let lastMonteCarloResult = null; // 存储最近一次蒙特卡洛结果
 
 // 原有API_KEY完全保留
 const API_KEY = "15aff59763f342bba8dd7da8782d467a";
@@ -725,30 +734,30 @@ const teams = {
 };
 
 // ==================== 增强: 球员精细化数据 ====================
-// 为每个球员添加 xG_per90, xA_per90, dribble_success, aerial_win, shot_acc 等
+// 为每个球员添加 xG_per90, xA_per90, dribble_success, aerial_win, shot_acc, penalty_accuracy（点球命中率）
 const enhancedPlayers = {
-  哈兰德: { name:"哈兰德", pos:"前锋", xG_per90:0.92, xA_per90:0.15, dribble_success:0.52, aerial_win:0.68, shot_acc:0.62, passes:0.78, tackles:0.3, keyPass:1.2, dribble:1.5, intercept:0.2, foul:0.8, star:true },
-  福登: { name:"福登", pos:"中场", xG_per90:0.35, xA_per90:0.28, dribble_success:0.74, aerial_win:0.45, shot_acc:0.58, passes:0.86, tackles:1.2, keyPass:2.3, dribble:2.1, intercept:1.0, foul:0.5 },
-  德布劳内: { name:"德布劳内", pos:"中场", xG_per90:0.28, xA_per90:0.45, dribble_success:0.69, aerial_win:0.38, shot_acc:0.55, passes:0.88, tackles:1.0, keyPass:3.5, dribble:1.8, intercept:0.8, foul:0.6, star:true },
-  B席: { name:"B席", pos:"中场", xG_per90:0.22, xA_per90:0.32, dribble_success:0.81, aerial_win:0.41, shot_acc:0.49, passes:0.89, tackles:1.5, keyPass:2.0, dribble:2.5, intercept:1.2, foul:0.7 },
-  罗德里: { name:"罗德里", pos:"后腰", xG_per90:0.12, xA_per90:0.10, dribble_success:0.62, aerial_win:0.72, shot_acc:0.45, passes:0.85, tackles:2.3, keyPass:0.8, dribble:0.5, intercept:2.0, foul:1.5 },
-  萨卡: { name:"萨卡", pos:"边锋", xG_per90:0.48, xA_per90:0.35, dribble_success:0.71, aerial_win:0.44, shot_acc:0.55, passes:0.83, tackles:1.0, keyPass:2.2, dribble:2.8, intercept:0.5, foul:0.6, star:true },
-  厄德高: { name:"厄德高", pos:"中场", xG_per90:0.30, xA_per90:0.38, dribble_success:0.68, aerial_win:0.36, shot_acc:0.52, passes:0.87, tackles:1.3, keyPass:3.0, dribble:1.9, intercept:1.1, foul:0.7 },
-  热苏斯: { name:"热苏斯", pos:"前锋", xG_per90:0.55, xA_per90:0.22, dribble_success:0.64, aerial_win:0.48, shot_acc:0.58, passes:0.76, tackles:0.8, keyPass:1.5, dribble:2.2, intercept:0.4, foul:1.0 },
-  马丁内利: { name:"马丁内利", pos:"边锋", xG_per90:0.42, xA_per90:0.26, dribble_success:0.70, aerial_win:0.39, shot_acc:0.54, passes:0.80, tackles:0.9, keyPass:1.8, dribble:2.5, intercept:0.6, foul:0.8 },
-  萨拉赫: { name:"萨拉赫", pos:"边锋", xG_per90:0.68, xA_per90:0.30, dribble_success:0.63, aerial_win:0.42, shot_acc:0.59, passes:0.79, tackles:0.6, keyPass:2.1, dribble:2.4, intercept:0.3, foul:0.4, star:true },
-  努涅斯: { name:"努涅斯", pos:"前锋", xG_per90:0.72, xA_per90:0.14, dribble_success:0.48, aerial_win:0.56, shot_acc:0.48, passes:0.70, tackles:0.4, keyPass:0.9, dribble:1.2, intercept:0.2, foul:0.9 },
-  范戴克: { name:"范戴克", pos:"中卫", xG_per90:0.05, xA_per90:0.02, dribble_success:0.35, aerial_win:0.82, shot_acc:0.30, passes:0.86, tackles:2.0, keyPass:0.3, dribble:0.2, intercept:2.5, foul:0.7, star:true },
-  阿利松: { name:"阿利松", pos:"门将", xG_per90:0, xA_per90:0, dribble_success:0, aerial_win:0, shot_acc:0, passes:0.75, tackles:0, keyPass:0, dribble:0, intercept:0, foul:0.1 },
-  斯特林: { name:"斯特林", pos:"边锋", xG_per90:0.40, xA_per90:0.20, dribble_success:0.65, aerial_win:0.35, shot_acc:0.50, passes:0.78, tackles:0.5, keyPass:1.6, dribble:2.0, intercept:0.3, foul:0.5 },
-  恩佐: { name:"恩佐", pos:"中场", xG_per90:0.18, xA_per90:0.25, dribble_success:0.66, aerial_win:0.44, shot_acc:0.46, passes:0.84, tackles:1.8, keyPass:2.3, dribble:1.5, intercept:1.4, foul:1.0 },
-  詹姆斯: { name:"詹姆斯", pos:"边卫", xG_per90:0.08, xA_per90:0.18, dribble_success:0.62, aerial_win:0.48, shot_acc:0.40, passes:0.80, tackles:2.1, keyPass:1.2, dribble:1.3, intercept:1.8, foul:0.9 },
-  拉什福德: { name:"拉什福德", pos:"边锋", xG_per90:0.52, xA_per90:0.19, dribble_success:0.59, aerial_win:0.41, shot_acc:0.53, passes:0.75, tackles:0.4, keyPass:1.4, dribble:2.2, intercept:0.2, foul:0.5 },
-  B费: { name:"B费", pos:"中场", xG_per90:0.33, xA_per90:0.36, dribble_success:0.60, aerial_win:0.47, shot_acc:0.50, passes:0.82, tackles:1.4, keyPass:3.2, dribble:1.6, intercept:1.0, foul:1.2, star:true },
-  卡塞米罗: { name:"卡塞米罗", pos:"后腰", xG_per90:0.11, xA_per90:0.08, dribble_success:0.55, aerial_win:0.68, shot_acc:0.41, passes:0.81, tackles:2.5, keyPass:0.7, dribble:0.4, intercept:2.1, foul:1.8 },
-  凯恩: { name:"凯恩", pos:"前锋", xG_per90:0.78, xA_per90:0.25, dribble_success:0.58, aerial_win:0.65, shot_acc:0.64, passes:0.77, tackles:0.5, keyPass:1.8, dribble:1.3, intercept:0.3, foul:0.8, star:true },
-  孙兴慜: { name:"孙兴慜", pos:"边锋", xG_per90:0.55, xA_per90:0.27, dribble_success:0.67, aerial_win:0.43, shot_acc:0.57, passes:0.79, tackles:0.6, keyPass:1.5, dribble:2.3, intercept:0.4, foul:0.5 },
-  麦迪逊: { name:"麦迪逊", pos:"中场", xG_per90:0.26, xA_per90:0.33, dribble_success:0.65, aerial_win:0.38, shot_acc:0.49, passes:0.85, tackles:1.1, keyPass:2.8, dribble:1.7, intercept:0.9, foul:0.6 }
+  哈兰德: { name:"哈兰德", pos:"前锋", xG_per90:0.92, xA_per90:0.15, dribble_success:0.52, aerial_win:0.68, shot_acc:0.62, penalty_accuracy:0.85, passes:0.78, tackles:0.3, keyPass:1.2, dribble:1.5, intercept:0.2, foul:0.8, star:true },
+  福登: { name:"福登", pos:"中场", xG_per90:0.35, xA_per90:0.28, dribble_success:0.74, aerial_win:0.45, shot_acc:0.58, penalty_accuracy:0.75, passes:0.86, tackles:1.2, keyPass:2.3, dribble:2.1, intercept:1.0, foul:0.5 },
+  德布劳内: { name:"德布劳内", pos:"中场", xG_per90:0.28, xA_per90:0.45, dribble_success:0.69, aerial_win:0.38, shot_acc:0.55, penalty_accuracy:0.80, passes:0.88, tackles:1.0, keyPass:3.5, dribble:1.8, intercept:0.8, foul:0.6, star:true },
+  B席: { name:"B席", pos:"中场", xG_per90:0.22, xA_per90:0.32, dribble_success:0.81, aerial_win:0.41, shot_acc:0.49, penalty_accuracy:0.70, passes:0.89, tackles:1.5, keyPass:2.0, dribble:2.5, intercept:1.2, foul:0.7 },
+  罗德里: { name:"罗德里", pos:"后腰", xG_per90:0.12, xA_per90:0.10, dribble_success:0.62, aerial_win:0.72, shot_acc:0.45, penalty_accuracy:0.60, passes:0.85, tackles:2.3, keyPass:0.8, dribble:0.5, intercept:2.0, foul:1.5 },
+  萨卡: { name:"萨卡", pos:"边锋", xG_per90:0.48, xA_per90:0.35, dribble_success:0.71, aerial_win:0.44, shot_acc:0.55, penalty_accuracy:0.82, passes:0.83, tackles:1.0, keyPass:2.2, dribble:2.8, intercept:0.5, foul:0.6, star:true },
+  厄德高: { name:"厄德高", pos:"中场", xG_per90:0.30, xA_per90:0.38, dribble_success:0.68, aerial_win:0.36, shot_acc:0.52, penalty_accuracy:0.78, passes:0.87, tackles:1.3, keyPass:3.0, dribble:1.9, intercept:1.1, foul:0.7 },
+  热苏斯: { name:"热苏斯", pos:"前锋", xG_per90:0.55, xA_per90:0.22, dribble_success:0.64, aerial_win:0.48, shot_acc:0.58, penalty_accuracy:0.72, passes:0.76, tackles:0.8, keyPass:1.5, dribble:2.2, intercept:0.4, foul:1.0 },
+  马丁内利: { name:"马丁内利", pos:"边锋", xG_per90:0.42, xA_per90:0.26, dribble_success:0.70, aerial_win:0.39, shot_acc:0.54, penalty_accuracy:0.68, passes:0.80, tackles:0.9, keyPass:1.8, dribble:2.5, intercept:0.6, foul:0.8 },
+  萨拉赫: { name:"萨拉赫", pos:"边锋", xG_per90:0.68, xA_per90:0.30, dribble_success:0.63, aerial_win:0.42, shot_acc:0.59, penalty_accuracy:0.88, passes:0.79, tackles:0.6, keyPass:2.1, dribble:2.4, intercept:0.3, foul:0.4, star:true },
+  努涅斯: { name:"努涅斯", pos:"前锋", xG_per90:0.72, xA_per90:0.14, dribble_success:0.48, aerial_win:0.56, shot_acc:0.48, penalty_accuracy:0.70, passes:0.70, tackles:0.4, keyPass:0.9, dribble:1.2, intercept:0.2, foul:0.9 },
+  范戴克: { name:"范戴克", pos:"中卫", xG_per90:0.05, xA_per90:0.02, dribble_success:0.35, aerial_win:0.82, shot_acc:0.30, penalty_accuracy:0.50, passes:0.86, tackles:2.0, keyPass:0.3, dribble:0.2, intercept:2.5, foul:0.7, star:true },
+  阿利松: { name:"阿利松", pos:"门将", xG_per90:0, xA_per90:0, dribble_success:0, aerial_win:0, shot_acc:0, penalty_accuracy:0, passes:0.75, tackles:0, keyPass:0, dribble:0, intercept:0, foul:0.1, penalty_save:0.30 }, // 扑点球能力
+  斯特林: { name:"斯特林", pos:"边锋", xG_per90:0.40, xA_per90:0.20, dribble_success:0.65, aerial_win:0.35, shot_acc:0.50, penalty_accuracy:0.65, passes:0.78, tackles:0.5, keyPass:1.6, dribble:2.0, intercept:0.3, foul:0.5 },
+  恩佐: { name:"恩佐", pos:"中场", xG_per90:0.18, xA_per90:0.25, dribble_success:0.66, aerial_win:0.44, shot_acc:0.46, penalty_accuracy:0.72, passes:0.84, tackles:1.8, keyPass:2.3, dribble:1.5, intercept:1.4, foul:1.0 },
+  詹姆斯: { name:"詹姆斯", pos:"边卫", xG_per90:0.08, xA_per90:0.18, dribble_success:0.62, aerial_win:0.48, shot_acc:0.40, penalty_accuracy:0.60, passes:0.80, tackles:2.1, keyPass:1.2, dribble:1.3, intercept:1.8, foul:0.9 },
+  拉什福德: { name:"拉什福德", pos:"边锋", xG_per90:0.52, xA_per90:0.19, dribble_success:0.59, aerial_win:0.41, shot_acc:0.53, penalty_accuracy:0.80, passes:0.75, tackles:0.4, keyPass:1.4, dribble:2.2, intercept:0.2, foul:0.5 },
+  B费: { name:"B费", pos:"中场", xG_per90:0.33, xA_per90:0.36, dribble_success:0.60, aerial_win:0.47, shot_acc:0.50, penalty_accuracy:0.90, passes:0.82, tackles:1.4, keyPass:3.2, dribble:1.6, intercept:1.0, foul:1.2, star:true },
+  卡塞米罗: { name:"卡塞米罗", pos:"后腰", xG_per90:0.11, xA_per90:0.08, dribble_success:0.55, aerial_win:0.68, shot_acc:0.41, penalty_accuracy:0.55, passes:0.81, tackles:2.5, keyPass:0.7, dribble:0.4, intercept:2.1, foul:1.8 },
+  凯恩: { name:"凯恩", pos:"前锋", xG_per90:0.78, xA_per90:0.25, dribble_success:0.58, aerial_win:0.65, shot_acc:0.64, penalty_accuracy:0.87, passes:0.77, tackles:0.5, keyPass:1.8, dribble:1.3, intercept:0.3, foul:0.8, star:true },
+  孙兴慜: { name:"孙兴慜", pos:"边锋", xG_per90:0.55, xA_per90:0.27, dribble_success:0.67, aerial_win:0.43, shot_acc:0.57, penalty_accuracy:0.75, passes:0.79, tackles:0.6, keyPass:1.5, dribble:2.3, intercept:0.4, foul:0.5 },
+  麦迪逊: { name:"麦迪逊", pos:"中场", xG_per90:0.26, xA_per90:0.33, dribble_success:0.65, aerial_win:0.38, shot_acc:0.49, penalty_accuracy:0.78, passes:0.85, tackles:1.1, keyPass:2.8, dribble:1.7, intercept:0.9, foul:0.6 }
 };
 
 // 重构teamData，使用增强球员数据
@@ -758,8 +767,8 @@ const teamData = {
     homeWin:78, awayWin:65, recentForm:3,
     players: [enhancedPlayers.哈兰德, enhancedPlayers.福登, enhancedPlayers.德布劳内, enhancedPlayers.B席, enhancedPlayers.罗德里],
     substitutes: [
-      { name:"阿尔瓦雷斯", pos:"前锋", xG_per90:0.55, xA_per90:0.18, dribble_success:0.60, aerial_win:0.45, shot_acc:0.55, passes:0.80, tackles:0.4, keyPass:0.8, dribble:1.0, intercept:0.2, foul:0.5 },
-      { name:"京多安", pos:"中场", xG_per90:0.24, xA_per90:0.20, dribble_success:0.64, aerial_win:0.41, shot_acc:0.51, passes:0.87, tackles:1.1, keyPass:1.5, dribble:1.2, intercept:0.9, foul:0.6 }
+      { name:"阿尔瓦雷斯", pos:"前锋", xG_per90:0.55, xA_per90:0.18, dribble_success:0.60, aerial_win:0.45, shot_acc:0.55, penalty_accuracy:0.80, passes:0.80, tackles:0.4, keyPass:0.8, dribble:1.0, intercept:0.2, foul:0.5 },
+      { name:"京多安", pos:"中场", xG_per90:0.24, xA_per90:0.20, dribble_success:0.64, aerial_win:0.41, shot_acc:0.51, penalty_accuracy:0.70, passes:0.87, tackles:1.1, keyPass:1.5, dribble:1.2, intercept:0.9, foul:0.6 }
     ],
     city:"曼彻斯特", topScorer:"哈兰德(22球)", topAssist:"德布劳内(12次)",
     xG:2.1, xGA:0.9, injuries:["哈兰德(主力前锋) 出战成疑","德布劳内(核心中场) 伤缺"],
@@ -1254,9 +1263,22 @@ function updateAvgStats(homeTeam, awayTeam, leagueStats) {
   document.getElementById('avgPossAway').innerText = Math.round(avgPoss * awayPower) + '%';
 }
 
-// 计算比赛重要性因子（基于积分榜）- 简化为随机
-function getImportanceFactor(hn, an) {
-  return Math.random() < 0.2 ? 1.05 : 1.0;
+// 计算比赛重要性因子（基于积分榜）- 增强为根据排名差
+async function getImportanceFactor(hn, an) {
+  // 尝试从积分榜获取排名
+  const comp = COMP_MAP[league] || "PL";
+  const standingData = await fetchWithCache(`https://api.football-data.org/v4/competitions/${comp}/standings`, `standing_${comp}_imp`, 3600000);
+  if (standingData && standingData.standings) {
+    let table = standingData.standings[0].table;
+    let homeRank = table.find(t => t.team.name === hn)?.position || 10;
+    let awayRank = table.find(t => t.team.name === an)?.position || 10;
+    let rankDiff = Math.abs(homeRank - awayRank);
+    // 排名接近 -> 关键战
+    if (rankDiff <= 3) return 1.1;
+    // 争冠/保级边缘（前3或后3）
+    if (homeRank <= 3 || homeRank >= table.length-2) return 1.05;
+  }
+  return 1.0;
 }
 
 // 判断是否为杯赛（用于点球大战）
@@ -1341,13 +1363,16 @@ function runMonteCarlo() {
   let iters = parseInt(document.getElementById('mcIters').value);
   document.getElementById('mcItersVal').innerText = iters;
   
-  // 5. 使用负二项分布，但调整参数以产生更多样化的比分
-  const size = 1.5; // 减小size，增加方差
+  // 5. 使用负二项分布，根据球队风格调整size参数（控球型方差小，反击型方差大）
+  let homeSize = h.tactics === '控球' ? 2.0 : 1.2;
+  let awaySize = a.tactics === '控球' ? 2.0 : 1.2;
   const timeWeights = [0.6, 0.9, 1.1, 1.3, 1.6]; // 微调时段权重
   
   let results = {};
   let win = 0, draw = 0, lose = 0;
   let bothScore = 0, totalGoalsGe3 = 0;
+  let halfTimeResults = {}; // 上半场比分统计
+  let goalMinutes = []; // 进球时间分布
   
   for (let i = 0; i < iters; i++) {
     // 引入更大的随机扰动
@@ -1355,14 +1380,15 @@ function runMonteCarlo() {
     let awayLambdaRand = awayLambda * (0.7 + Math.random() * 0.6);
     
     let hg = 0, ag = 0;
-    // 分时段模拟
+    let hgHalf = 0, agHalf = 0; // 上半场进球
+    // 分时段模拟（5个15分钟）
     for (let seg = 0; seg < 5; seg++) {
       let segHomeLambda = homeLambdaRand * timeWeights[seg] / 5;
       let segAwayLambda = awayLambdaRand * timeWeights[seg] / 5;
       
       // 负二项抽样：成功概率 p = size / (size + lambda)
-      let pHome = size / (size + segHomeLambda);
-      let pAway = size / (size + segAwayLambda);
+      let pHome = homeSize / (homeSize + segHomeLambda);
+      let pAway = awaySize / (awaySize + segAwayLambda);
       
       // 使用几何分布的和模拟负二项
       let homeGoalsSeg = 0;
@@ -1372,21 +1398,43 @@ function runMonteCarlo() {
       
       hg += homeGoalsSeg;
       ag += awayGoalsSeg;
+      if (seg < 3) { // 前45分钟（0-45）为上半场
+        hgHalf += homeGoalsSeg;
+        agHalf += awayGoalsSeg;
+      }
+      // 记录进球时间（粗略）
+      for (let g=0; g<homeGoalsSeg; g++) {
+        let minute = seg*15 + Math.floor(Math.random()*15) + 1;
+        goalMinutes.push({team:'home', minute});
+      }
+      for (let g=0; g<awayGoalsSeg; g++) {
+        let minute = seg*15 + Math.floor(Math.random()*15) + 1;
+        goalMinutes.push({team:'away', minute});
+      }
     }
     
     // 补时阶段额外机会（概率稍高）
-    if (Math.random() < 0.12) (Math.random()<0.5?hg++:ag++);
+    if (Math.random() < 0.12) {
+      if (Math.random()<0.5) { hg++; if (hgHalf === 0 && agHalf === 0) hgHalf++; } // 补时进球计入下半场
+      else { ag++; if (hgHalf === 0 && agHalf === 0) agHalf++; }
+    }
     
     hg = Math.min(hg, 8);
     ag = Math.min(ag, 8);
+    hgHalf = Math.min(hgHalf, 8);
+    agHalf = Math.min(agHalf, 8);
     
     let key = hg + "-" + ag;
     results[key] = (results[key] || 0) + 1;
+    let halfKey = hgHalf + "-" + agHalf;
+    halfTimeResults[halfKey] = (halfTimeResults[halfKey] || 0) + 1;
+    
     if (hg > ag) win++; else if (hg < ag) lose++; else draw++;
     if (hg > 0 && ag > 0) bothScore++;
     if (hg + ag >= 3) totalGoalsGe3++;
   }
   
+  // 排序比分
   let sorted = Object.entries(results).sort((a,b) => b[1] - a[1]).slice(0,5);
   let html = '';
   sorted.forEach(([sc, cnt]) => {
@@ -1402,9 +1450,21 @@ function runMonteCarlo() {
   
   let bothP = (bothScore/iters*100).toFixed(1);
   let ge3P = (totalGoalsGe3/iters*100).toFixed(1);
-  document.getElementById('mcExtra').innerHTML = `⚽ 双方均进球概率 ${bothP}% | 总进球≥3概率 ${ge3P}%`;
+  
+  // 最可能上半场比分
+  let sortedHalf = Object.entries(halfTimeResults).sort((a,b) => b[1] - a[1]);
+  let mostHalf = sortedHalf.length > 0 ? sortedHalf[0][0] : "0-0";
+  
+  document.getElementById('mcBoth').innerText = bothP + '%';
+  document.getElementById('mcOver').innerText = ge3P + '%';
+  document.getElementById('mcHalf').innerText = mostHalf;
+  
+  document.getElementById('mcExtra').innerHTML = `⚽ 双方均进球概率 ${bothP}% | 总进球≥3概率 ${ge3P}% | 上半场最可能 ${mostHalf}`;
   
   document.getElementById('monteCarloResult').style.display = 'block';
+  
+  // 保存结果供后续使用
+  lastMonteCarloResult = { winP, drawP, loseP, bothP, ge3P, mostHalf, topScores: sorted };
 }
 
 // ==================== 增强版实时比赛模拟 (整合所有新特性) ====================
@@ -1422,22 +1482,22 @@ function startSim() {
   let a = getTeam(an);
   let min = 0, hg = 0, ag = 0;
   let hShot = 0, aShot = 0, hShotOn = 0, aShotOn = 0;
-  let hCorner = 0, aCorner = 0;
+  let hCorner = 0, aCorner = 0, hFreekick = 0, aFreekick = 0; // 任意球
   let hRed = 0, aRed = 0, hOff = 0, aOff = 0;
   let hSave = 0, aSave = 0, hAssist = 0, aAssist = 0;
-  let hWood = 0, aWood = 0;
+  let hWood = 0, aWood = 0, hOwnGoal = 0, aOwnGoal = 0;
   let hSub = 0, aSub = 0;
   let hPass = 85, aPass = 82;
   let hDist = 105, aDist = 103;
   let hBall = 50, aBall = 50;
+  let hInjuries = [], aInjuries = []; // 受伤球员记录
   
   // 疲劳度 (基于赛程密集度)
   let homeFatigue = 1.0, awayFatigue = 1.0;
-  // 异步获取疲劳系数，但模拟中简化，随机设定
   homeFatigue = 0.95 + Math.random()*0.1;
   awayFatigue = 0.95 + Math.random()*0.1;
   
-  // 客场旅途疲劳 (若国家不同)
+  // 客场旅途疲劳
   if (h.country && a.country && h.country !== a.country && Math.random() < 0.3) {
     awayFatigue *= 0.95;
     showToast(`✈️ ${an} 长途跋涉，体能受影响`);
@@ -1449,7 +1509,7 @@ function startSim() {
   
   // 心理状态: 士气因子
   let h2hAdvantage = window.h2hAdvantage || 1.0;
-  let importanceFactor = getImportanceFactor(hn, an);
+  let importanceFactor = getImportanceFactor(hn, an); // 异步但模拟中简化
   let socialFactor = (parseInt(document.getElementById('socialHome').innerText) / 100) || 0.5;
   let homeMorale = h2hAdvantage * importanceFactor * (0.98 + socialFactor*0.04) * homeTransferImpact;
   let awayMorale = importanceFactor * (1.02 - socialFactor*0.04) * awayTransferImpact;
@@ -1464,12 +1524,22 @@ function startSim() {
   document.getElementById('refPen').innerText = ref.pen_avg.toFixed(2);
   document.getElementById('refNote').innerText = `执法风格: ${ref.style} | VAR使用率: ${(ref.var_usage*100).toFixed(0)}%`;
   
-  // 天气微观影响 (在模拟中调整传球、射门)
+  // 天气微观影响
   let weatherType = document.getElementById('weatherDesc').innerText;
-  let passWeatherFactor = 1.0, shotWeatherFactor = 1.0, runWeatherFactor = 1.0;
-  if (weatherType.includes('雨')) { passWeatherFactor = 0.97; shotWeatherFactor = 0.95; runWeatherFactor = 0.98; }
-  else if (weatherType.includes('雪')) { passWeatherFactor = 0.92; shotWeatherFactor = 0.88; runWeatherFactor = 0.90; }
-  document.getElementById('weatherMicro').innerHTML = `🌧️ 传球-3% 射门-5% 跑动-2%`;
+  let passWeatherFactor = 1.0, shotWeatherFactor = 1.0, runWeatherFactor = 1.0, setPieceFactor = 1.0;
+  if (weatherType.includes('雨')) { 
+    passWeatherFactor = 0.97; 
+    shotWeatherFactor = 0.95; 
+    runWeatherFactor = 0.98;
+    setPieceFactor = 0.96; // 定位球准确率下降
+  }
+  else if (weatherType.includes('雪')) { 
+    passWeatherFactor = 0.92; 
+    shotWeatherFactor = 0.88; 
+    runWeatherFactor = 0.90;
+    setPieceFactor = 0.90;
+  }
+  document.getElementById('weatherMicro').innerHTML = `🌧️ 传球-3% 射门-5% 跑动-2% 定位球-4%`;
   
   // 教练战术风格影响进攻系数
   let homeCoachStyle = h.coach?.style || '均衡';
@@ -1489,7 +1559,7 @@ function startSim() {
     homePlayerStats[p.name] = { 
       shots:0, passes:0, tackles:0, assists:0, goals:0, 
       keyPass:0, dribble:0, intercept:0, foul:0,
-      mins:0, sub:false, xG: p.xG_per90 || 0, xA: p.xA_per90 || 0
+      mins:0, sub:false, xG: p.xG_per90 || 0, xA: p.xA_per90 || 0, injured: false
     };
   });
   let awayPlayerStats = {};
@@ -1497,7 +1567,7 @@ function startSim() {
     awayPlayerStats[p.name] = { 
       shots:0, passes:0, tackles:0, assists:0, goals:0,
       keyPass:0, dribble:0, intercept:0, foul:0,
-      mins:0, sub:false, xG: p.xG_per90 || 0, xA: p.xA_per90 || 0
+      mins:0, sub:false, xG: p.xG_per90 || 0, xA: p.xA_per90 || 0, injured: false
     };
   });
   
@@ -1521,14 +1591,16 @@ function startSim() {
   let awayXg = a.xG || 1.3;
   
   // 伤停位置影响
-  let homeAttackFactor = 1.0, homeDefendFactor = 1.0, homePassFactor = 1.0;
-  let awayAttackFactor = 1.0, awayDefendFactor = 1.0, awayPassFactor = 1.0;
+  let homeAttackFactor = 1.0, homeDefendFactor = 1.0, homePassFactor = 1.0, homeSetPiece = 1.0;
+  let awayAttackFactor = 1.0, awayDefendFactor = 1.0, awayPassFactor = 1.0, awaySetPiece = 1.0;
   if (h.injuries && h.injuries.length > 0) {
     h.players.forEach(p => {
       if (h.injuries.includes(p.name)) {
         if (p.pos === '前锋') homeAttackFactor *= 0.85;
         else if (p.pos === '中场') homePassFactor *= 0.9;
         else if (p.pos === '后卫' || p.pos === '后腰') homeDefendFactor *= 0.85;
+        // 定位球影响
+        if (p.name === '德布劳内' || p.name === 'B费') homeSetPiece *= 0.8;
       }
     });
   }
@@ -1538,6 +1610,7 @@ function startSim() {
         if (p.pos === '前锋') awayAttackFactor *= 0.85;
         else if (p.pos === '中场') awayPassFactor *= 0.9;
         else if (p.pos === '后卫' || p.pos === '后腰') awayDefendFactor *= 0.85;
+        if (p.name === '凯恩' || p.name === '麦迪逊') awaySetPiece *= 0.8;
       }
     });
   }
@@ -1577,12 +1650,12 @@ function startSim() {
     let homeDisplay = Object.entries(homePlayerStats)
       .filter(([_, stat]) => stat.shots>0 || stat.passes>0 || stat.tackles>0)
       .map(([name, stat]) => 
-        `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
+        `${name}${stat.injured?'🩹':''}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
       ).join(' · ');
     let awayDisplay = Object.entries(awayPlayerStats)
       .filter(([_, stat]) => stat.shots>0 || stat.passes>0 || stat.tackles>0)
       .map(([name, stat]) => 
-        `${name}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
+        `${name}${stat.injured?'🩹':''}: 射门${stat.shots} 传球${stat.passes} 抢断${stat.tackles}${stat.goals>0?' ⚽'+stat.goals:''}`
       ).join(' · ');
     document.getElementById('playerStatsHome').innerText = homeDisplay || '暂无数据';
     document.getElementById('playerStatsAway').innerText = awayDisplay || '暂无数据';
@@ -1602,22 +1675,42 @@ function startSim() {
       if (min >= 90 + injuryTime) {
         clearInterval(simTimer);
         if (isCupLeague(league) && hg === ag) {
-          // 点球大战，使用球队点球胜率
-          let homePenWin = h.penaltyWinrate || 0.5;
-          let awayPenWin = a.penaltyWinrate || 0.5;
+          // 点球大战，使用球员点球命中率
           let homePenGoals = 0, awayPenGoals = 0;
+          let homeTakers = h.players.filter(p => !p.injured && p.penalty_accuracy).sort((a,b) => b.penalty_accuracy - a.penalty_accuracy);
+          let awayTakers = a.players.filter(p => !p.injured && p.penalty_accuracy).sort((a,b) => b.penalty_accuracy - a.penalty_accuracy);
+          if (homeTakers.length === 0) homeTakers = h.players;
+          if (awayTakers.length === 0) awayTakers = a.players;
           for (let r=0; r<5; r++) {
-            if (Math.random() < homePenWin) homePenGoals++;
-            if (Math.random() < awayPenWin) awayPenGoals++;
+            let homeP = homeTakers[r % homeTakers.length].penalty_accuracy || 0.7;
+            if (Math.random() < homeP) homePenGoals++;
+            let awayP = awayTakers[r % awayTakers.length].penalty_accuracy || 0.7;
+            if (Math.random() < awayP) awayPenGoals++;
+          }
+          while (homePenGoals === awayPenGoals) {
+            let homeP = homeTakers[Math.floor(Math.random()*homeTakers.length)].penalty_accuracy || 0.7;
+            if (Math.random() < homeP) homePenGoals++;
+            let awayP = awayTakers[Math.floor(Math.random()*awayTakers.length)].penalty_accuracy || 0.7;
+            if (Math.random() < awayP) awayPenGoals++;
           }
           document.getElementById("simEvent").innerText = `点球大战结束！${hn} ${homePenGoals}-${awayPenGoals} ${an}`;
           document.getElementById("simScore").innerText = `${hg} - ${ag} (点球 ${homePenGoals}-${awayPenGoals})`;
         } else {
           document.getElementById("simEvent").innerText = `全场比赛结束！最终比分 ${hg}-${ag}`;
         }
-        // 赛后评分
-        let homeRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
-        let awayRatings = { gk: (6+Math.random()*2).toFixed(1), def: (6+Math.random()*2).toFixed(1), mid: (6+Math.random()*2).toFixed(1), fwd: (6+Math.random()*2).toFixed(1) };
+        // 赛后评分（多维度）
+        let homeRatings = {
+          gk: (6+Math.random()*2 + (hSave>3?1:0)).toFixed(1),
+          def: (6+Math.random()*2 - (hRed>0?1:0) + (hDefendFactor>1?0.5:0)).toFixed(1),
+          mid: (6+Math.random()*2 + (hAssist>0?0.5:0)).toFixed(1),
+          fwd: (6+Math.random()*2 + hg*0.5).toFixed(1)
+        };
+        let awayRatings = {
+          gk: (6+Math.random()*2 + (aSave>3?1:0)).toFixed(1),
+          def: (6+Math.random()*2 - (aRed>0?1:0) + (aDefendFactor>1?0.5:0)).toFixed(1),
+          mid: (6+Math.random()*2 + (aAssist>0?0.5:0)).toFixed(1),
+          fwd: (6+Math.random()*2 + ag*0.5).toFixed(1)
+        };
         document.getElementById("ratingContent").innerHTML = 
           `<div class="home-rating">${hn} 门将:${homeRatings.gk} 后卫:${homeRatings.def} 中场:${homeRatings.mid} 前锋:${homeRatings.fwd}</div>
            <div class="away-rating">${an} 门将:${awayRatings.gk} 后卫:${awayRatings.def} 中场:${awayRatings.mid} 前锋:${awayRatings.fwd}</div>
@@ -1631,6 +1724,7 @@ function startSim() {
         report += `⚖️ 裁判: ${refName} (${ref.style})<br>`;
         report += `🩺 伤停影响: 主队进攻${homeAttackFactor.toFixed(2)} 防守${homeDefendFactor.toFixed(2)} 客队进攻${awayAttackFactor.toFixed(2)} 防守${awayDefendFactor.toFixed(2)}<br>`;
         report += `🧑‍🏫 教练战术: ${hn} ${homeCoachStyle} | ${an} ${awayCoachStyle}`;
+        if (hOwnGoal > 0 || aOwnGoal > 0) report += `<br>⚽ 乌龙球: ${hOwnGoal>0?hn+' '+hOwnGoal:''} ${aOwnGoal>0?an+' '+aOwnGoal:''}`;
         document.getElementById('reportContent').innerHTML = report;
         document.getElementById('postMatchReport').style.display = 'block';
         return;
@@ -1676,96 +1770,212 @@ function startSim() {
     let awayCornerProb = 0.01 * (a.attack/80) * awayAggressive;
     let homeFoulProb = 0.008 * (h.defend/80) * (1 - homeAggressive) * (ref.style==='strict'?1.2: ref.style==='lenient'?0.8:1.0) * homeDefendFactor;
     let awayFoulProb = 0.008 * (a.defend/80) * (1 - awayAggressive) * (ref.style==='strict'?1.2: ref.style==='lenient'?0.8:1.0) * awayDefendFactor;
+    // 任意球概率（来自犯规）
+    let homeFreekickProb = homeFoulProb * 0.3; // 30%的犯规在危险区域
+    let awayFreekickProb = awayFoulProb * 0.3;
     
     let event = "";
     let rand = Math.random();
     
-    if (rand < homeShotProb) {
-      hShot++;
-      let shooter = h.players[Math.floor(Math.random() * h.players.length)].name;
-      if (homePlayerStats[shooter]) homePlayerStats[shooter].shots++;
-      
-      let onTargetProb = 0.35 + (h.attack - a.defend) / 200;
-      onTargetProb *= homeStarPower * homeMorale * shotWeatherFactor;
-      if (min > 80 && homeStar === shooter) onTargetProb *= 1.1;
-      if (Math.random() < onTargetProb) {
-        hShotOn++;
-        if (Math.random() < 0.2 + aSave/50) {
-          aSave++;
-          event = `${min}′ ${hn} 射正，被${a.players[2]?.name||'门将'}扑出！`;
-        } else {
-          hg++;
-          if (homePlayerStats[shooter]) homePlayerStats[shooter].goals++;
-          event = `⚽ GOAL！${min}′ ${hn} 进球！ ${shooter}`;
-          if (Math.random()<0.3) { 
-            hAssist++; 
-            let assister = h.players[Math.floor(Math.random() * h.players.length)].name;
-            if (homePlayerStats[assister]) homePlayerStats[assister].assists++;
-            event += ` 助攻: ${assister}`; 
+    // 优先处理任意球/角球进球（定位球）
+    if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece) { // 角球进球概率
+      hg++;
+      let scorer = h.players[Math.floor(Math.random() * h.players.length)].name;
+      if (homePlayerStats[scorer]) homePlayerStats[scorer].goals++;
+      event = `⚽ GOAL！${min}′ ${hn} 角球进球！ ${scorer}`;
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece) {
+      ag++;
+      let scorer = a.players[Math.floor(Math.random() * a.players.length)].name;
+      if (awayPlayerStats[scorer]) awayPlayerStats[scorer].goals++;
+      event = `⚽ GOAL！${min}′ ${an} 角球进球！ ${scorer}`;
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece + homeFreekickProb * 0.2 * setPieceFactor * homeSetPiece) {
+      hg++;
+      let scorer = h.players[Math.floor(Math.random() * h.players.length)].name;
+      if (homePlayerStats[scorer]) homePlayerStats[scorer].goals++;
+      event = `⚽ GOAL！${min}′ ${hn} 任意球破门！ ${scorer}`;
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece + homeFreekickProb * 0.2 * setPieceFactor * homeSetPiece + awayFreekickProb * 0.2 * setPieceFactor * awaySetPiece) {
+      ag++;
+      let scorer = a.players[Math.floor(Math.random() * a.players.length)].name;
+      if (awayPlayerStats[scorer]) awayPlayerStats[scorer].goals++;
+      event = `⚽ GOAL！${min}′ ${an} 任意球破门！ ${scorer}`;
+      document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+    }
+    else {
+      // 常规运动战
+      if (rand < homeShotProb) {
+        hShot++;
+        let shooter = h.players[Math.floor(Math.random() * h.players.length)].name;
+        if (homePlayerStats[shooter]) homePlayerStats[shooter].shots++;
+        
+        let onTargetProb = 0.35 + (h.attack - a.defend) / 200;
+        onTargetProb *= homeStarPower * homeMorale * shotWeatherFactor;
+        if (min > 80 && homeStar === shooter) onTargetProb *= 1.1;
+        if (Math.random() < onTargetProb) {
+          hShotOn++;
+          if (Math.random() < 0.2 + aSave/50) {
+            aSave++;
+            event = `${min}′ ${hn} 射正，被${a.players[2]?.name||'门将'}扑出！`;
+          } else {
+            hg++;
+            if (homePlayerStats[shooter]) homePlayerStats[shooter].goals++;
+            event = `⚽ GOAL！${min}′ ${hn} 进球！ ${shooter}`;
+            if (Math.random()<0.3) { 
+              hAssist++; 
+              let assister = h.players[Math.floor(Math.random() * h.players.length)].name;
+              if (homePlayerStats[assister]) homePlayerStats[assister].assists++;
+              event += ` 助攻: ${assister}`; 
+            }
+            document.getElementById("simScore").innerText = `${hg} - ${ag}`;
           }
-          document.getElementById("simScore").innerText = `${hg} - ${ag}`;
-        }
-      } else {
-        if (Math.random()<0.1) { hWood++; event = `${min}′ ${hn} 射门击中门柱！`; }
-        else event = `${min}′ ${hn} 射门偏出。`;
-      }
-    }
-    else if (rand < homeShotProb + awayShotProb) {
-      aShot++;
-      let shooter = a.players[Math.floor(Math.random() * a.players.length)].name;
-      if (awayPlayerStats[shooter]) awayPlayerStats[shooter].shots++;
-      
-      let onTargetProb = 0.35 + (a.attack - h.defend) / 200;
-      onTargetProb *= awayStarPower * awayMorale * shotWeatherFactor;
-      if (min > 80 && awayStar === shooter) onTargetProb *= 1.1;
-      if (Math.random() < onTargetProb) {
-        aShotOn++;
-        if (Math.random() < 0.2 + hSave/50) {
-          hSave++;
-          event = `${min}′ ${an} 射正，被${h.players[2]?.name||'门将'}扑出！`;
         } else {
-          ag++;
-          if (awayPlayerStats[shooter]) awayPlayerStats[shooter].goals++;
-          event = `⚽ GOAL！${min}′ ${an} 进球！ ${shooter}`;
-          if (Math.random()<0.3) { 
-            aAssist++; 
-            let assister = a.players[Math.floor(Math.random() * a.players.length)].name;
-            if (awayPlayerStats[assister]) awayPlayerStats[assister].assists++;
-            event += ` 助攻: ${assister}`; 
-          }
-          document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+          if (Math.random()<0.1) { hWood++; event = `${min}′ ${hn} 射门击中门柱！`; }
+          else event = `${min}′ ${hn} 射门偏出。`;
         }
+      }
+      else if (rand < homeShotProb + awayShotProb) {
+        aShot++;
+        let shooter = a.players[Math.floor(Math.random() * a.players.length)].name;
+        if (awayPlayerStats[shooter]) awayPlayerStats[shooter].shots++;
+        
+        let onTargetProb = 0.35 + (a.attack - h.defend) / 200;
+        onTargetProb *= awayStarPower * awayMorale * shotWeatherFactor;
+        if (min > 80 && awayStar === shooter) onTargetProb *= 1.1;
+        if (Math.random() < onTargetProb) {
+          aShotOn++;
+          if (Math.random() < 0.2 + hSave/50) {
+            hSave++;
+            event = `${min}′ ${an} 射正，被${h.players[2]?.name||'门将'}扑出！`;
+          } else {
+            ag++;
+            if (awayPlayerStats[shooter]) awayPlayerStats[shooter].goals++;
+            event = `⚽ GOAL！${min}′ ${an} 进球！ ${shooter}`;
+            if (Math.random()<0.3) { 
+              aAssist++; 
+              let assister = a.players[Math.floor(Math.random() * a.players.length)].name;
+              if (awayPlayerStats[assister]) awayPlayerStats[assister].assists++;
+              event += ` 助攻: ${assister}`; 
+            }
+            document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+          }
+        } else {
+          if (Math.random()<0.1) { aWood++; event = `${min}′ ${an} 射门击中门柱！`; }
+          else event = `${min}′ ${an} 射门偏出。`;
+        }
+      }
+      else if (rand < homeShotProb + awayShotProb + homeCornerProb) {
+        hCorner++; event = `${min}′ ${hn} 角球。`;
+      }
+      else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb) {
+        aCorner++; event = `${min}′ ${an} 角球。`;
+      }
+      else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb) {
+        if (Math.random()<0.2) { hOff++; event = `${min}′ ${hn} 越位。`; }
+        else {
+          let foulCard = Math.random() < ref.yellow_avg/100 ? '黄牌' : (Math.random() < ref.red_avg/20 ? '红牌' : '犯规');
+          if (Math.random() < ref.pen_avg && min>10) foulCard = '点球';
+          if (foulCard === '红牌') { 
+            hRed++; 
+            // 随机一名球员被罚下
+            let player = h.players[Math.floor(Math.random() * h.players.length)].name;
+            if (homePlayerStats[player]) homePlayerStats[player].foul++;
+            event = `🔴 ${min}′ ${hn} 球员 ${player} 被红牌罚下！`;
+          }
+          else if (foulCard === '黄牌') {
+            let player = h.players[Math.floor(Math.random() * h.players.length)].name;
+            if (homePlayerStats[player]) homePlayerStats[player].foul++;
+            event = `🟨 ${min}′ ${hn} ${player} 吃到黄牌。`;
+          }
+          else if (foulCard === '点球') {
+            event = `${min}′ 点球！${hn} 获得点球机会！`;
+            // 点球命中率基于主罚球员
+            let taker = h.players.find(p => p.penalty_accuracy) || h.players[0];
+            let prob = (taker.penalty_accuracy || 0.75) * (1 - (a.players.find(p=>p.penalty_save)?.penalty_save || 0.12));
+            if (Math.random() < prob) {
+              hg++;
+              if (homePlayerStats[taker.name]) homePlayerStats[taker.name].goals++;
+              event += ` 命中！ ${taker.name} 得分！`;
+              document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+            } else {
+              event += ` 被扑出！`;
+            }
+          }
+          else {
+            let player = h.players[Math.floor(Math.random() * h.players.length)].name;
+            if (homePlayerStats[player]) homePlayerStats[player].foul++;
+            event = `${min}′ ${hn} ${player} 犯规。`;
+            // 可能受伤
+            if (Math.random() < 0.02) {
+              if (!homePlayerStats[player].injured) {
+                homePlayerStats[player].injured = true;
+                event += `  ${player} 受伤倒地，可能无法坚持。`;
+                // 实际比赛中会换人，简化处理
+              }
+            }
+          }
+        }
+      }
+      else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb + awayFoulProb) {
+        if (Math.random()<0.2) { aOff++; event = `${min}′ ${an} 越位。`; }
+        else {
+          let foulCard = Math.random() < ref.yellow_avg/100 ? '黄牌' : (Math.random() < ref.red_avg/20 ? '红牌' : '犯规');
+          if (Math.random() < ref.pen_avg && min>10) foulCard = '点球';
+          if (foulCard === '红牌') { 
+            aRed++;
+            let player = a.players[Math.floor(Math.random() * a.players.length)].name;
+            if (awayPlayerStats[player]) awayPlayerStats[player].foul++;
+            event = `🔴 ${min}′ ${an} 球员 ${player} 被红牌罚下！`;
+          }
+          else if (foulCard === '黄牌') {
+            let player = a.players[Math.floor(Math.random() * a.players.length)].name;
+            if (awayPlayerStats[player]) awayPlayerStats[player].foul++;
+            event = `🟨 ${min}′ ${an} ${player} 吃到黄牌。`;
+          }
+          else if (foulCard === '点球') {
+            event = `${min}′ 点球！${an} 获得点球机会！`;
+            let taker = a.players.find(p => p.penalty_accuracy) || a.players[0];
+            let prob = (taker.penalty_accuracy || 0.75) * (1 - (h.players.find(p=>p.penalty_save)?.penalty_save || 0.12));
+            if (Math.random() < prob) {
+              ag++;
+              if (awayPlayerStats[taker.name]) awayPlayerStats[taker.name].goals++;
+              event += ` 命中！ ${taker.name} 得分！`;
+              document.getElementById("simScore").innerText = `${hg} - ${ag}`;
+            } else {
+              event += ` 被扑出！`;
+            }
+          }
+          else {
+            let player = a.players[Math.floor(Math.random() * a.players.length)].name;
+            if (awayPlayerStats[player]) awayPlayerStats[player].foul++;
+            event = `${min}′ ${an} ${player} 犯规。`;
+            if (Math.random() < 0.02) {
+              if (!awayPlayerStats[player].injured) {
+                awayPlayerStats[player].injured = true;
+                event += `  ${player} 受伤倒地。`;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // 乌龙球概率（极低）
+    if (Math.random() < 0.005) {
+      if (Math.random() < 0.5) {
+        hOwnGoal++;
+        ag++;
+        event = `😅 乌龙球！${min}′ ${hn} 球员不慎自摆乌龙！`;
+        document.getElementById("simScore").innerText = `${hg} - ${ag}`;
       } else {
-        if (Math.random()<0.1) { aWood++; event = `${min}′ ${an} 射门击中门柱！`; }
-        else event = `${min}′ ${an} 射门偏出。`;
-      }
-    }
-    else if (rand < homeShotProb + awayShotProb + homeCornerProb) {
-      hCorner++; event = `${min}′ ${hn} 角球。`;
-    }
-    else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb) {
-      aCorner++; event = `${min}′ ${an} 角球。`;
-    }
-    else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb) {
-      if (Math.random()<0.2) { hOff++; event = `${min}′ ${hn} 越位。`; }
-      else {
-        let foulCard = Math.random() < ref.yellow_avg/100 ? '黄牌' : (Math.random() < ref.red_avg/20 ? '红牌' : '犯规');
-        if (Math.random() < ref.pen_avg && min>10) foulCard = '点球';
-        if (foulCard === '红牌') { hRed++; event = `🔴 ${min}′ ${hn} 球员被红牌罚下！`; }
-        else if (foulCard === '黄牌') event = `🟨 ${min}′ ${hn} 球员吃到黄牌。`;
-        else if (foulCard === '点球') event = `${min}′ 点球！${hn} 获得点球机会！`;
-        else event = `${min}′ ${hn} 犯规。`;
-      }
-    }
-    else if (rand < homeShotProb + awayShotProb + homeCornerProb + awayCornerProb + homeFoulProb + awayFoulProb) {
-      if (Math.random()<0.2) { aOff++; event = `${min}′ ${an} 越位。`; }
-      else {
-        let foulCard = Math.random() < ref.yellow_avg/100 ? '黄牌' : (Math.random() < ref.red_avg/20 ? '红牌' : '犯规');
-        if (Math.random() < ref.pen_avg && min>10) foulCard = '点球';
-        if (foulCard === '红牌') { aRed++; event = `🔴 ${min}′ ${an} 球员被红牌罚下！`; }
-        else if (foulCard === '黄牌') event = `🟨 ${min}′ ${an} 球员吃到黄牌。`;
-        else if (foulCard === '点球') event = `${min}′ 点球！${an} 获得点球机会！`;
-        else event = `${min}′ ${an} 犯规。`;
+        aOwnGoal++;
+        hg++;
+        event = `😅 乌龙球！${min}′ ${an} 球员不慎自摆乌龙！`;
+        document.getElementById("simScore").innerText = `${hg} - ${ag}`;
       }
     }
     
@@ -1793,24 +2003,24 @@ function startSim() {
     
     if (Math.random() < 0.3) {
       let passer = h.players[Math.floor(Math.random() * h.players.length)].name;
-      if (homePlayerStats[passer]) homePlayerStats[passer].passes += Math.floor(Math.random()*3)+1;
+      if (homePlayerStats[passer] && !homePlayerStats[passer].injured) homePlayerStats[passer].passes += Math.floor(Math.random()*3)+1;
     }
     if (Math.random() < 0.3) {
       let passer = a.players[Math.floor(Math.random() * a.players.length)].name;
-      if (awayPlayerStats[passer]) awayPlayerStats[passer].passes += Math.floor(Math.random()*3)+1;
+      if (awayPlayerStats[passer] && !awayPlayerStats[passer].injured) awayPlayerStats[passer].passes += Math.floor(Math.random()*3)+1;
     }
     
     if (min === 60 && homeSubs.length > 0 && Math.random() < (h.coach?.subAggression || 0.3)) {
       hSub++;
       let subIn = homeSubs[Math.floor(Math.random() * homeSubs.length)];
-      homePlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0 };
+      homePlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0, injured:false };
       event = `🔄 ${min}′ ${hn} 换人，${subIn.name} 登场。`;
       homeFatigue = 1.0;
     }
     if (min === 60 && awaySubs.length > 0 && Math.random() < (a.coach?.subAggression || 0.3)) {
       aSub++;
       let subIn = awaySubs[Math.floor(Math.random() * awaySubs.length)];
-      awayPlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0 };
+      awayPlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0, injured:false };
       event = `🔄 ${min}′ ${an} 换人，${subIn.name} 登场。`;
       awayFatigue = 1.0;
     }
@@ -1834,11 +2044,35 @@ async function startAI(){
   try {
     let h=getTeam(hn);let a=getTeam(an);let lg=leagueAttr[league] || leagueAttr["英超"];
     
+    // 从近期真实战绩调整xG（增强真实数据）
+    let homeRecentGoals = 0, awayRecentGoals = 0, homeRecentMatches = 0, awayRecentMatches = 0;
+    document.querySelectorAll('#homeRecentDetails .schedule-item').forEach(item => {
+      let text = item.innerText;
+      let parts = text.match(/(\d+)\s*-\s*(\d+)/);
+      if (parts) {
+        homeRecentGoals += parseInt(parts[1]);
+        homeRecentMatches++;
+      }
+    });
+    document.querySelectorAll('#awayRecentDetails .schedule-item').forEach(item => {
+      let text = item.innerText;
+      let parts = text.match(/(\d+)\s*-\s*(\d+)/);
+      if (parts) {
+        awayRecentGoals += parseInt(parts[2]);
+        awayRecentMatches++;
+      }
+    });
+    let homeRecentAvg = homeRecentMatches > 0 ? homeRecentGoals / homeRecentMatches : h.xG;
+    let awayRecentAvg = awayRecentMatches > 0 ? awayRecentGoals / awayRecentMatches : a.xG;
+    // 混合原始xG和近期平均 (权重各0.5)
+    let homeXgAdj = (h.xG * 0.5 + homeRecentAvg * 0.5) - (h.xgImpact || 0);
+    let awayXgAdj = (a.xG * 0.5 + awayRecentAvg * 0.5) - (a.xgImpact || 0);
+    
     // 更新比赛背景
     let derby = checkDerby(hn, an);
     let derbyText = derby ? '⚔️ 德比战！战意↑进球↑' : '⚔️ 无德比';
-    let importance = '📈 常规联赛';
-    if (Math.random() < 0.2) importance = '📈 关键战（争冠/保级）';
+    let importanceFactor = await getImportanceFactor(hn, an); // 基于真实排名
+    let importance = importanceFactor > 1.05 ? '📈 关键战（争冠/保级）' : '📈 常规联赛';
     let homeCoach = h.coach?.name || coachData[hn] || '未知';
     let awayCoach = a.coach?.name || coachData[an] || '未知';
     let coachRecord = getCoachRecord(homeCoach, awayCoach);
@@ -1919,9 +2153,6 @@ async function startAI(){
     }
     window.h2hAdvantage = h2hAdvantage;
     
-    let homeXgAdj = h.xG - (h.xgImpact || 0);
-    let awayXgAdj = a.xG - (a.xgImpact || 0);
-    
     let homeLambda, awayLambda;
     if (document.getElementById('usePoissonReg').checked) {
       homeLambda = computeLambdaWithFeatures(h, a, true);
@@ -1944,8 +2175,8 @@ async function startAI(){
       document.getElementById('styleCounter').innerText = '风格相克系数: ' + styleText;
     }
     if (isInternationalBreak()) { homeLambda *= 0.97; awayLambda *= 0.97; }
-    homeLambda *= (h.starPower || 1.0) * homeFatigue * homeTransfer;
-    awayLambda *= (a.starPower || 1.0) * awayFatigue * awayTransfer;
+    homeLambda *= (h.starPower || 1.0) * homeFatigue * homeTransfer * importanceFactor;
+    awayLambda *= (a.starPower || 1.0) * awayFatigue * awayTransfer * importanceFactor;
     
     let weatherDesc = ["晴","小雨","中雨","雪"][Math.floor(Math.random()*4)];
     let adjust = weatherDesc.includes("雨") ? -8 : (weatherDesc=="雪"? -15 : 0);
@@ -1955,7 +2186,7 @@ async function startAI(){
     document.getElementById("xgAdjust").innerText = adjust + "% (" + weatherDesc + ")";
     
     // 微观天气影响显示
-    let microText = weatherDesc.includes("雨") ? "传球-3% 射门-5% 跑动-2%" : (weatherDesc=="雪" ? "传球-8% 射门-12% 跑动-10%" : "无影响");
+    let microText = weatherDesc.includes("雨") ? "传球-3% 射门-5% 跑动-2% 定位球-4%" : (weatherDesc=="雪" ? "传球-8% 射门-12% 跑动-10% 定位球-10%" : "无影响");
     document.getElementById('weatherMicro').innerHTML = `🌦️ ${microText}`;
     
     let win = 0, draw = 0, lose = 0;
@@ -1999,6 +2230,11 @@ async function startAI(){
     document.getElementById("prob1").innerText = (top3[0].prob*100).toFixed(1)+"%";
     document.getElementById("prob2").innerText = (top3[1].prob*100).toFixed(1)+"%";
     document.getElementById("prob3").innerText = (top3[2].prob*100).toFixed(1)+"%";
+    
+    // 冷门推荐（概率小于5%但大于1%的比分）
+    let coldScores = scoreProb.filter(p => p.prob < 0.05 && p.prob > 0.01).slice(0,2);
+    let coldText = coldScores.length ? coldScores.map(s => `${s.score} (${(s.prob*100).toFixed(1)}%)`).join(' ') : '暂无';
+    document.getElementById('coldScore').innerHTML = `🔥 冷门关注: ${coldText}`;
     
     let reasons = [
       `泊松回归 + ${weatherDesc}调整，德比战加成，球星影响`,
@@ -2128,7 +2364,7 @@ function getTeam(name){
     homeWin:55,
     awayWin:45,
     recentForm:0,
-    players: [{ name:"未知球员1", pos:"前锋", xG_per90:0.3, xA_per90:0.1, passes:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5 }],
+    players: [{ name:"未知球员1", pos:"前锋", xG_per90:0.3, xA_per90:0.1, passes:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5, penalty_accuracy:0.7 }],
     substitutes: [],
     city:"未知",
     topScorer:"未知",
@@ -2151,7 +2387,7 @@ function getTeam(name){
   return teamData[name]||{
     power:75, attack:70, defend:70, style:1, home:1.0, away:1.0,
     homeWin:50, awayWin:40, recentForm:0,
-    players: [{ name:"未知球员", pos:"前锋", xG_per90:0.3, xA_per90:0.1, passes:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5 }],
+    players: [{ name:"未知球员", pos:"前锋", xG_per90:0.3, xA_per90:0.1, passes:0.8, tackles:1, keyPass:0.5, dribble:0.5, intercept:0.5, foul:0.5, penalty_accuracy:0.7 }],
     substitutes: [],
     city:"伦敦", topScorer:"未知", topAssist:"未知",
     xG:1.4, xGA:1.4, injuries:[], styleDesc:"未知", xgImpact:0, elo:1200,
