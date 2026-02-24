@@ -865,14 +865,36 @@ document.querySelectorAll("#leagueList .league-item").forEach(e=>{
   }
 });
 
-function loadTeam(){
-  let h=document.getElementById("homeTeam");
-  let a=document.getElementById("awayTeam");
-  h.innerHTML="<option>请选择主队</option>";
-  a.innerHTML="<option>请选择客队</option>";
-  if(teams[league]&&teams[league][season]){
-    teams[league][season].forEach(t=>{h.innerHTML+=`<option>${t}</option>`;a.innerHTML+=`<option>${t}</option>`;});
+// ==================== 修正后的 loadTeam 函数（支持赛季回退） ====================
+function loadTeam() {
+  let h = document.getElementById("homeTeam");
+  let a = document.getElementById("awayTeam");
+  h.innerHTML = "<option>请选择主队</option>";
+  a.innerHTML = "<option>请选择客队</option>";
+
+  // 获取当前联赛的球队数据，如果当前赛季不存在，则回退到 2025-2026 赛季
+  let leagueTeams = teams[league];
+  if (!leagueTeams) {
+    console.warn("联赛数据不存在");
+    return;
   }
+
+  let teamList = leagueTeams[season];
+  if (!teamList) {
+    // 回退到 2025-2026 赛季
+    teamList = leagueTeams["2025-2026"];
+    if (teamList) {
+      showToast(`⚠️ 赛季 ${season} 暂无数据，已自动使用 2025-2026 赛季球队`);
+    } else {
+      console.warn("该联赛无任何赛季数据");
+      return;
+    }
+  }
+
+  teamList.forEach(t => {
+    h.innerHTML += `<option>${t}</option>`;
+    a.innerHTML += `<option>${t}</option>`;
+  });
 }
 
 // 泊松分布
