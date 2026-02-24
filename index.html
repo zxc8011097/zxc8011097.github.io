@@ -2258,6 +2258,66 @@ async function startAI(){
   try {
     let h=getTeam(hn);let a=getTeam(an);let lg=leagueAttr[league] || leagueAttr["英超"];
     
+    // 确保球队对象有基本属性，防止因数据缺失导致错误
+    h = {
+      power: h.power || 80,
+      attack: h.attack || 75,
+      defend: h.defend || 70,
+      home: h.home || 1.0,
+      away: h.away || 0.95,
+      homeWin: h.homeWin || 50,
+      awayWin: h.awayWin || 40,
+      recentForm: h.recentForm || 1,
+      players: h.players || [],
+      substitutes: h.substitutes || [],
+      city: h.city || "未知",
+      topScorer: h.topScorer || "未知",
+      topAssist: h.topAssist || "未知",
+      xG: h.xG || 1.5,
+      xGA: h.xGA || 1.4,
+      injuries: h.injuries || [],
+      styleDesc: h.styleDesc || "未知",
+      xgImpact: h.xgImpact || 0,
+      elo: h.elo || 1300,
+      tactics: h.tactics || "均衡",
+      starPower: h.starPower || 1.0,
+      coach: h.coach || { name:"未知", style:"均衡", subAggression:0.3 },
+      country: h.country || "未知",
+      formation: h.formation || "4-4-2",
+      positionStrength: h.positionStrength || { left_attack:70, right_attack:70, center_defense:70, left_defense:65, right_defense:65 },
+      penaltyWinrate: h.penaltyWinrate || 0.5,
+      yellowCards: h.yellowCards || {}
+    };
+    a = {
+      power: a.power || 75,
+      attack: a.attack || 70,
+      defend: a.defend || 70,
+      home: a.home || 1.0,
+      away: a.away || 0.95,
+      homeWin: a.homeWin || 50,
+      awayWin: a.awayWin || 40,
+      recentForm: a.recentForm || 1,
+      players: a.players || [],
+      substitutes: a.substitutes || [],
+      city: a.city || "未知",
+      topScorer: a.topScorer || "未知",
+      topAssist: a.topAssist || "未知",
+      xG: a.xG || 1.3,
+      xGA: a.xGA || 1.4,
+      injuries: a.injuries || [],
+      styleDesc: a.styleDesc || "未知",
+      xgImpact: a.xgImpact || 0,
+      elo: a.elo || 1250,
+      tactics: a.tactics || "均衡",
+      starPower: a.starPower || 1.0,
+      coach: a.coach || { name:"未知", style:"均衡", subAggression:0.3 },
+      country: a.country || "未知",
+      formation: a.formation || "4-4-2",
+      positionStrength: a.positionStrength || { left_attack:65, right_attack:65, center_defense:70, left_defense:65, right_defense:65 },
+      penaltyWinrate: a.penaltyWinrate || 0.5,
+      yellowCards: a.yellowCards || {}
+    };
+    
     // 从近期真实战绩调整xG（增强真实数据）
     let homeRecentGoals = 0, awayRecentGoals = 0, homeRecentMatches = 0, awayRecentMatches = 0;
     document.querySelectorAll('#homeRecentDetails .schedule-item').forEach(item => {
@@ -2497,7 +2557,12 @@ async function startAI(){
     ]}});
     
     savePrediction(hn, an, top3[0].score);
-  } catch(e){ showToast("预测失败"); } finally { hideLoading(); }
+  } catch(e){ 
+    console.error("预测失败详细错误：", e); 
+    showToast("预测失败，请查看控制台"); 
+  } finally { 
+    hideLoading(); 
+  }
 }
 
 function showLineupEditor() {
