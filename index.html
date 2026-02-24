@@ -152,6 +152,7 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 .error-heatmap { display:grid; grid-template-columns:repeat(5,1fr); gap:2px; font-size:10px; text-align:center; }
 .error-heatmap div { background:#131b2e; padding:4px; border-radius:4px; }
 .mc-extra-detail { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:11px; color:#FFD700; }
+.h2h-stats { font-size:11px; background:#151d30; padding:8px; border-radius:8px; margin-top:6px; }
 </style>
 </head>
 <body>
@@ -232,6 +233,8 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   <div class="fatigue-indicator" id="fatigueInfo"></div>
   <!-- 新增：转会影响 -->
   <div class="transfer-impact" id="transferImpactInfo"></div>
+  <!-- 新增：球队动态状态 -->
+  <div class="team-dynamic-state" id="teamDynamicState"></div>
 </div>
 
 <!-- 新增：近期场均数据卡片（基于联赛模型） -->
@@ -528,6 +531,8 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 <div class="title" style="margin-top:12px;font-size:14px;color:#aab" id="h2hTitle">🤝 历史交锋 (近5次·真实)</div>
 <div class="schedule-box" id="h2hDetail" style="display:block; max-height:120px;"></div>
 <div class="vs-record" id="vsRecord"></div>
+<!-- 新增：交锋深度统计 -->
+<div class="h2h-stats" id="h2hStats"></div>
 <!-- 进球分布柱状图 -->
 <div class="data-card" style="margin-top:8px;">
   <div class="title" id="h2hChartTitle">📊 交锋进球分布</div>
@@ -711,7 +716,17 @@ const teams = {
   "意甲":{"2025-2026":["国米","AC米兰","尤文","那不勒斯","亚特兰大","罗马","拉齐奥","佛罗伦萨","博洛尼亚","都灵","蒙扎","热那亚","莱切","萨索洛","弗罗西诺内","恩波利","乌迪内斯","卡利亚里","维罗纳","萨勒尼塔纳"]},
   "法甲":{"2025-2026":["巴黎","马赛","摩纳哥","里尔","里昂","尼斯","朗斯","雷恩","斯特拉斯堡","蒙彼利埃","图卢兹","布雷斯特","南特","勒阿弗尔","梅斯","克莱蒙","洛里昂","欧塞尔"]},
   "中超":{"2025-2026":["上海海港","山东泰山","上海申花","北京国安","成都蓉城","武汉三镇","浙江队","天津津门虎","长春亚泰","河南队","沧州雄狮","深圳新鹏城","青岛海牛","南通支云","梅州客家"]},
-  "欧冠":{"2025-2026":["曼城","皇马","拜仁","巴萨","国米","巴黎","多特","利物浦","阿森纳","马竞","莱比锡","波尔图","本菲卡","埃因霍温","哥本哈根","凯尔特人","顿涅茨克矿工","萨尔茨堡","贝尔格莱德红星","年轻人"]},
+  // ==================== 欧冠扩充列表（含博德闪耀等） ====================
+  "欧冠": {
+    "2025-2026": [
+      "曼城", "皇马", "拜仁", "巴萨", "巴黎", "利物浦", "国米", "多特", "莱比锡", "勒沃库森",
+      "马竞", "塞维利亚", "波尔图", "本菲卡", "阿森纳", "曼联", "纽卡斯尔", "尤文", "AC米兰", "那不勒斯",
+      "拉齐奥", "柏林联合", "皇家社会", "赫罗纳", "朗斯", "埃因霍温", "费耶诺德", "凯尔特人", "哥本哈根", "顿涅茨克矿工",
+      "萨尔茨堡", "贝尔格莱德红星", "年轻人", "安特卫普", "加拉塔萨雷", "布拉加", "流浪者", "博德闪耀", "萨格勒布迪纳摩", "谢里夫",
+      "卡拉巴赫", "卢多戈雷茨", "奥林匹亚科斯", "贝尔格莱德游击", "布拉格斯拉维亚", "布拉格斯巴达", "亨克", "摩纳哥", "马赛", "里昂",
+      "葡萄牙体育", "阿贾克斯", "布鲁日", "费内巴切"
+    ]
+  },
   "葡超":{"2025-2026":["本菲卡","波尔图","葡萄牙体育","布拉加","吉马良斯","阿罗卡","法马利康","博阿维斯塔","卡萨皮亚","埃斯托里尔","法鲁人","阿马多拉","里奥阿维","维泽拉","沙维什"]},
   "荷甲":{"2025-2026":["阿贾克斯","埃因霍温","费耶诺德","乌德勒支","阿尔克马尔","特温特","鹿特丹斯巴达","海伦芬","福图纳锡塔德","兹沃勒","前进之鹰","奈梅亨","瓦尔韦克","阿尔梅勒城","赫拉克勒斯","沃伦丹"]},
   "苏超":{"2025-2026":["凯尔特人","流浪者","阿伯丁","希伯尼安","哈茨","基尔马诺克","圣米伦","马瑟韦尔","罗斯郡","利文斯顿","邓迪FC","圣约翰斯通"]},
@@ -731,6 +746,190 @@ const teams = {
   "法乙":{"2025-2026":["欧塞尔","昂热","圣埃蒂安","拉瓦勒","罗德兹","波尔多","巴斯蒂亚","卡昂","格勒诺布尔","巴黎FC","亚眠","甘冈","波城","敦刻尔克","阿雅克肖","瓦朗谢讷","孔卡诺","奎维利","特鲁瓦"]},
   "葡甲":{"2025-2026":["圣克拉拉","马里迪莫","国民队","通德拉","马夫拉","雷克斯欧斯","阿维河","费雷拉","莱里亚","奥利韦伦斯","本菲卡B队","波尔图B队","布拉加B队","维塞乌","费尔盖拉什","莱索斯","科维良","佩纳菲耶尔"]},
   "荷乙":{"2025-2026":["威廉二世","格罗宁根","罗达JC","多德雷赫特","布雷达","埃门","阿尔克马尔青年队","阿贾克斯青年队","埃因霍温青年队","乌德勒支青年队","芬洛","坎布尔","格拉夫夏普","马斯特里赫特","奥斯","登博斯","海牙","特尔斯达","赫尔蒙德","FC埃因霍温","邓伯什"]}
+};
+
+// ==================== 新增：联赛历史积分榜数据（英超、西甲 2022-23 至 2025-26）====================
+const leagueStandingsHistory = {
+  "英超": {
+    "2025-2026": [
+      { rank:1, team:"阿森纳", played:25, win:17, draw:5, loss:3, goalsFor:49, goalsAgainst:17, points:56 },
+      { rank:2, team:"曼城", played:26, win:16, draw:5, loss:5, goalsFor:54, goalsAgainst:24, points:53 },
+      { rank:3, team:"阿斯顿维拉", played:26, win:15, draw:5, loss:6, goalsFor:37, goalsAgainst:27, points:50 },
+      { rank:4, team:"曼联", played:26, win:12, draw:9, loss:5, goalsFor:47, goalsAgainst:37, points:45 },
+      { rank:5, team:"切尔西", played:26, win:12, draw:8, loss:6, goalsFor:47, goalsAgainst:30, points:44 },
+      { rank:6, team:"利物浦", played:26, win:12, draw:6, loss:8, goalsFor:41, goalsAgainst:35, points:42 },
+      { rank:7, team:"布伦特福德", played:25, win:12, draw:3, loss:10, goalsFor:39, goalsAgainst:34, points:39 },
+      { rank:8, team:"埃弗顿", played:26, win:10, draw:7, loss:9, goalsFor:29, goalsAgainst:30, points:37 },
+      { rank:9, team:"伯恩茅斯", played:26, win:9, draw:10, loss:7, goalsFor:43, goalsAgainst:45, points:37 },
+      { rank:10, team:"纽卡斯尔", played:26, win:10, draw:6, loss:10, goalsFor:37, goalsAgainst:37, points:36 },
+      { rank:11, team:"桑德兰", played:26, win:9, draw:9, loss:8, goalsFor:27, goalsAgainst:30, points:36 },
+      { rank:12, team:"富勒姆", played:26, win:10, draw:4, loss:12, goalsFor:35, goalsAgainst:40, points:34 },
+      { rank:13, team:"水晶宫", played:26, win:8, draw:8, loss:10, goalsFor:28, goalsAgainst:32, points:32 },
+      { rank:14, team:"布莱顿", played:26, win:7, draw:10, loss:9, goalsFor:34, goalsAgainst:34, points:31 },
+      { rank:15, team:"利兹联", played:26, win:7, draw:9, loss:10, goalsFor:36, goalsAgainst:45, points:30 },
+      { rank:16, team:"热刺", played:26, win:7, draw:8, loss:11, goalsFor:36, goalsAgainst:37, points:29 },
+      { rank:17, team:"诺丁汉森林", played:26, win:7, draw:6, loss:13, goalsFor:25, goalsAgainst:38, points:27 },
+      { rank:18, team:"西汉姆联", played:26, win:6, draw:6, loss:14, goalsFor:32, goalsAgainst:49, points:24 },
+      { rank:19, team:"伯恩利", played:26, win:4, draw:6, loss:16, goalsFor:28, goalsAgainst:51, points:18 },
+      { rank:20, team:"狼队", played:26, win:1, draw:6, loss:19, goalsFor:16, goalsAgainst:48, points:9 }
+    ],
+    "2024-2025": [
+      { rank:1, team:"利物浦", played:38, win:25, draw:9, loss:4, goalsFor:86, goalsAgainst:41, points:84 },
+      { rank:2, team:"阿森纳", played:38, win:20, draw:14, loss:4, goalsFor:69, goalsAgainst:34, points:74 },
+      { rank:3, team:"曼城", played:38, win:21, draw:8, loss:9, goalsFor:72, goalsAgainst:44, points:71 },
+      { rank:4, team:"切尔西", played:38, win:20, draw:9, loss:9, goalsFor:64, goalsAgainst:43, points:69 },
+      { rank:5, team:"纽卡斯尔", played:38, win:20, draw:6, loss:12, goalsFor:68, goalsAgainst:47, points:66 },
+      { rank:6, team:"阿斯顿维拉", played:38, win:19, draw:9, loss:10, goalsFor:58, goalsAgainst:51, points:66 },
+      { rank:7, team:"诺丁汉森林", played:38, win:19, draw:8, loss:11, goalsFor:58, goalsAgainst:46, points:65 },
+      { rank:8, team:"布莱顿", played:38, win:16, draw:13, loss:9, goalsFor:66, goalsAgainst:59, points:61 },
+      { rank:9, team:"伯恩茅斯", played:38, win:15, draw:11, loss:12, goalsFor:58, goalsAgainst:46, points:56 },
+      { rank:10, team:"布伦特福德", played:38, win:16, draw:8, loss:14, goalsFor:66, goalsAgainst:57, points:56 },
+      { rank:11, team:"富勒姆", played:38, win:15, draw:9, loss:14, goalsFor:54, goalsAgainst:54, points:54 },
+      { rank:12, team:"水晶宫", played:38, win:13, draw:14, loss:11, goalsFor:51, goalsAgainst:51, points:53 },
+      { rank:13, team:"埃弗顿", played:38, win:11, draw:15, loss:12, goalsFor:42, goalsAgainst:44, points:48 },
+      { rank:14, team:"西汉姆联", played:38, win:11, draw:10, loss:17, goalsFor:46, goalsAgainst:62, points:43 },
+      { rank:15, team:"曼联", played:38, win:11, draw:9, loss:18, goalsFor:44, goalsAgainst:54, points:42 },
+      { rank:16, team:"狼队", played:38, win:12, draw:6, loss:20, goalsFor:54, goalsAgainst:69, points:42 },
+      { rank:17, team:"热刺", played:38, win:11, draw:5, loss:22, goalsFor:64, goalsAgainst:65, points:38 },
+      { rank:18, team:"莱斯特城", played:38, win:6, draw:7, loss:25, goalsFor:33, goalsAgainst:80, points:25 },
+      { rank:19, team:"伊普斯维奇", played:38, win:4, draw:10, loss:24, goalsFor:36, goalsAgainst:82, points:22 },
+      { rank:20, team:"南安普顿", played:38, win:2, draw:6, loss:30, goalsFor:26, goalsAgainst:86, points:12 }
+    ],
+    "2023-2024": [
+      { rank:1, team:"曼城", played:38, win:28, draw:7, loss:3, goalsFor:96, goalsAgainst:34, points:91 },
+      { rank:2, team:"阿森纳", played:38, win:28, draw:5, loss:5, goalsFor:91, goalsAgainst:29, points:89 },
+      { rank:3, team:"利物浦", played:38, win:24, draw:10, loss:4, goalsFor:86, goalsAgainst:41, points:82 },
+      { rank:4, team:"阿斯顿维拉", played:38, win:20, draw:8, loss:10, goalsFor:76, goalsAgainst:61, points:68 },
+      { rank:5, team:"热刺", played:38, win:20, draw:6, loss:12, goalsFor:74, goalsAgainst:61, points:66 },
+      { rank:6, team:"切尔西", played:38, win:18, draw:9, loss:11, goalsFor:77, goalsAgainst:63, points:63 },
+      { rank:7, team:"纽卡斯尔", played:38, win:18, draw:6, loss:14, goalsFor:85, goalsAgainst:62, points:60 },
+      { rank:8, team:"曼联", played:38, win:18, draw:6, loss:14, goalsFor:57, goalsAgainst:58, points:60 },
+      { rank:9, team:"西汉姆联", played:38, win:14, draw:10, loss:14, goalsFor:60, goalsAgainst:74, points:52 },
+      { rank:10, team:"水晶宫", played:38, win:13, draw:10, loss:15, goalsFor:57, goalsAgainst:58, points:49 },
+      { rank:11, team:"布莱顿", played:38, win:12, draw:12, loss:14, goalsFor:55, goalsAgainst:62, points:48 },
+      { rank:12, team:"伯恩茅斯", played:38, win:13, draw:9, loss:16, goalsFor:54, goalsAgainst:67, points:48 },
+      { rank:13, team:"富勒姆", played:38, win:13, draw:8, loss:17, goalsFor:55, goalsAgainst:61, points:47 },
+      { rank:14, team:"狼队", played:38, win:13, draw:7, loss:18, goalsFor:50, goalsAgainst:65, points:46 },
+      { rank:15, team:"埃弗顿", played:38, win:13, draw:9, loss:16, goalsFor:40, goalsAgainst:51, points:40 },
+      { rank:16, team:"布伦特福德", played:38, win:10, draw:9, loss:19, goalsFor:56, goalsAgainst:65, points:39 },
+      { rank:17, team:"诺丁汉森林", played:38, win:9, draw:9, loss:20, goalsFor:49, goalsAgainst:67, points:32 },
+      { rank:18, team:"卢顿", played:38, win:6, draw:8, loss:24, goalsFor:52, goalsAgainst:85, points:26 },
+      { rank:19, team:"伯恩利", played:38, win:5, draw:9, loss:24, goalsFor:41, goalsAgainst:78, points:24 },
+      { rank:20, team:"谢菲尔德联", played:38, win:3, draw:7, loss:28, goalsFor:35, goalsAgainst:104, points:16 }
+    ],
+    "2022-2023": [
+      { rank:1, team:"曼城", played:38, win:28, draw:5, loss:5, goalsFor:94, goalsAgainst:33, points:89 },
+      { rank:2, team:"阿森纳", played:38, win:26, draw:6, loss:6, goalsFor:88, goalsAgainst:43, points:84 },
+      { rank:3, team:"曼联", played:38, win:23, draw:6, loss:9, goalsFor:58, goalsAgainst:43, points:75 },
+      { rank:4, team:"纽卡斯尔", played:38, win:19, draw:14, loss:5, goalsFor:68, goalsAgainst:33, points:71 },
+      { rank:5, team:"利物浦", played:38, win:19, draw:10, loss:9, goalsFor:75, goalsAgainst:47, points:67 },
+      { rank:6, team:"布莱顿", played:38, win:18, draw:8, loss:12, goalsFor:72, goalsAgainst:53, points:62 },
+      { rank:7, team:"阿斯顿维拉", played:38, win:18, draw:7, loss:13, goalsFor:51, goalsAgainst:46, points:61 },
+      { rank:8, team:"热刺", played:38, win:18, draw:6, loss:14, goalsFor:70, goalsAgainst:63, points:60 },
+      { rank:9, team:"布伦特福德", played:38, win:15, draw:14, loss:9, goalsFor:58, goalsAgainst:46, points:59 },
+      { rank:10, team:"富勒姆", played:38, win:15, draw:7, loss:16, goalsFor:55, goalsAgainst:53, points:52 },
+      { rank:11, team:"水晶宫", played:38, win:11, draw:12, loss:15, goalsFor:40, goalsAgainst:49, points:45 },
+      { rank:12, team:"切尔西", played:38, win:11, draw:11, loss:16, goalsFor:38, goalsAgainst:47, points:44 },
+      { rank:13, team:"狼队", played:38, win:11, draw:8, loss:19, goalsFor:31, goalsAgainst:58, points:41 },
+      { rank:14, team:"西汉姆联", played:38, win:11, draw:7, loss:20, goalsFor:42, goalsAgainst:55, points:40 },
+      { rank:15, team:"伯恩茅斯", played:38, win:11, draw:6, loss:21, goalsFor:37, goalsAgainst:71, points:39 },
+      { rank:16, team:"诺丁汉森林", played:38, win:9, draw:11, loss:18, goalsFor:38, goalsAgainst:68, points:38 },
+      { rank:17, team:"埃弗顿", played:38, win:8, draw:12, loss:18, goalsFor:34, goalsAgainst:57, points:36 },
+      { rank:18, team:"莱斯特城", played:38, win:9, draw:7, loss:22, goalsFor:51, goalsAgainst:68, points:34 },
+      { rank:19, team:"利兹联", played:38, win:7, draw:10, loss:21, goalsFor:48, goalsAgainst:78, points:31 },
+      { rank:20, team:"南安普顿", played:38, win:6, draw:7, loss:25, goalsFor:36, goalsAgainst:73, points:25 }
+    ]
+  },
+  "西甲": {
+    "2025-2026": [
+      { rank:1, team:"巴塞罗那", played:23, win:19, draw:1, loss:3, goalsFor:63, goalsAgainst:23, points:58 },
+      { rank:2, team:"皇家马德里", played:23, win:18, draw:3, loss:2, goalsFor:49, goalsAgainst:18, points:57 },
+      { rank:3, team:"马德里竞技", played:23, win:13, draw:6, loss:4, goalsFor:38, goalsAgainst:18, points:45 },
+      { rank:4, team:"比利亚雷亚尔", played:22, win:14, draw:3, loss:5, goalsFor:43, goalsAgainst:24, points:45 },
+      { rank:5, team:"皇家贝蒂斯", played:23, win:10, draw:8, loss:5, goalsFor:37, goalsAgainst:28, points:38 },
+      { rank:6, team:"西班牙人", played:23, win:10, draw:4, loss:9, goalsFor:27, goalsAgainst:31, points:34 },
+      { rank:7, team:"维戈塞尔塔", played:23, win:8, draw:9, loss:6, goalsFor:30, goalsAgainst:25, points:33 },
+      { rank:8, team:"皇家社会", played:23, win:8, draw:7, loss:8, goalsFor:33, goalsAgainst:31, points:31 },
+      { rank:9, team:"奥萨苏纳", played:23, win:8, draw:5, loss:10, goalsFor:28, goalsAgainst:28, points:29 },
+      { rank:10, team:"毕尔巴鄂竞技", played:23, win:8, draw:4, loss:11, goalsFor:25, goalsAgainst:33, points:28 },
+      { rank:11, team:"赫塔菲", played:23, win:7, draw:5, loss:11, goalsFor:18, goalsAgainst:27, points:26 },
+      { rank:12, team:"赫罗纳", played:23, win:6, draw:8, loss:9, goalsFor:22, goalsAgainst:37, points:26 },
+      { rank:13, team:"塞维利亚", played:23, win:7, draw:4, loss:12, goalsFor:30, goalsAgainst:38, points:25 },
+      { rank:14, team:"阿拉维斯", played:23, win:7, draw:4, loss:12, goalsFor:20, goalsAgainst:29, points:25 },
+      { rank:15, team:"埃尔切", played:23, win:5, draw:9, loss:9, goalsFor:31, goalsAgainst:35, points:24 },
+      { rank:16, team:"马略卡", played:23, win:6, draw:6, loss:11, goalsFor:28, goalsAgainst:37, points:24 },
+      { rank:17, team:"瓦伦西亚", played:23, win:5, draw:8, loss:10, goalsFor:23, goalsAgainst:37, points:23 },
+      { rank:18, team:"巴列卡诺", played:22, win:5, draw:7, loss:10, goalsFor:18, goalsAgainst:30, points:22 },
+      { rank:19, team:"莱万特", played:22, win:4, draw:6, loss:12, goalsFor:26, goalsAgainst:38, points:18 },
+      { rank:20, team:"奥维耶多", played:22, win:3, draw:7, loss:12, goalsFor:12, goalsAgainst:34, points:16 }
+    ],
+    "2024-2025": [
+      { rank:1, team:"巴塞罗那", played:38, win:28, draw:4, loss:6, goalsFor:102, goalsAgainst:39, points:88 },
+      { rank:2, team:"皇家马德里", played:38, win:26, draw:6, loss:6, goalsFor:78, goalsAgainst:38, points:84 },
+      { rank:3, team:"马德里竞技", played:38, win:22, draw:10, loss:6, goalsFor:68, goalsAgainst:30, points:76 },
+      { rank:4, team:"毕尔巴鄂竞技", played:38, win:19, draw:13, loss:6, goalsFor:54, goalsAgainst:29, points:70 },
+      { rank:5, team:"比利亚雷亚尔", played:38, win:20, draw:10, loss:8, goalsFor:71, goalsAgainst:51, points:70 },
+      { rank:6, team:"皇家贝蒂斯", played:38, win:16, draw:12, loss:10, goalsFor:57, goalsAgainst:50, points:60 },
+      { rank:7, team:"维戈塞尔塔", played:38, win:16, draw:7, loss:15, goalsFor:59, goalsAgainst:57, points:55 },
+      { rank:8, team:"巴列卡诺", played:38, win:13, draw:13, loss:12, goalsFor:41, goalsAgainst:45, points:52 },
+      { rank:9, team:"奥萨苏纳", played:38, win:12, draw:16, loss:10, goalsFor:48, goalsAgainst:52, points:52 },
+      { rank:10, team:"马略卡", played:38, win:13, draw:9, loss:16, goalsFor:35, goalsAgainst:44, points:48 },
+      { rank:11, team:"皇家社会", played:38, win:13, draw:7, loss:18, goalsFor:35, goalsAgainst:46, points:46 },
+      { rank:12, team:"瓦伦西亚", played:38, win:11, draw:13, loss:14, goalsFor:44, goalsAgainst:54, points:46 },
+      { rank:13, team:"赫塔菲", played:38, win:11, draw:9, loss:18, goalsFor:34, goalsAgainst:39, points:42 },
+      { rank:14, team:"西班牙人", played:38, win:11, draw:9, loss:18, goalsFor:40, goalsAgainst:51, points:42 },
+      { rank:15, team:"阿拉维斯", played:38, win:10, draw:12, loss:16, goalsFor:38, goalsAgainst:48, points:42 },
+      { rank:16, team:"赫罗纳", played:38, win:11, draw:8, loss:19, goalsFor:44, goalsAgainst:60, points:41 },
+      { rank:17, team:"塞维利亚", played:38, win:10, draw:11, loss:17, goalsFor:42, goalsAgainst:55, points:41 },
+      { rank:18, team:"莱加内斯", played:38, win:9, draw:13, loss:17, goalsFor:39, goalsAgainst:56, points:40 },
+      { rank:19, team:"拉斯帕尔马斯", played:38, win:8, draw:8, loss:22, goalsFor:40, goalsAgainst:61, points:32 },
+      { rank:20, team:"巴拉多利德", played:38, win:4, draw:4, loss:30, goalsFor:26, goalsAgainst:90, points:16 }
+    ],
+    "2023-2024": [
+      { rank:1, team:"皇家马德里", played:38, win:29, draw:8, loss:1, goalsFor:87, goalsAgainst:26, points:95 },
+      { rank:2, team:"巴塞罗那", played:38, win:26, draw:7, loss:5, goalsFor:79, goalsAgainst:44, points:85 },
+      { rank:3, team:"赫罗纳", played:38, win:25, draw:6, loss:7, goalsFor:85, goalsAgainst:46, points:81 },
+      { rank:4, team:"马德里竞技", played:38, win:24, draw:4, loss:10, goalsFor:70, goalsAgainst:43, points:76 },
+      { rank:5, team:"毕尔巴鄂竞技", played:38, win:19, draw:11, loss:8, goalsFor:61, goalsAgainst:37, points:68 },
+      { rank:6, team:"皇家社会", played:38, win:16, draw:12, loss:10, goalsFor:51, goalsAgainst:39, points:60 },
+      { rank:7, team:"皇家贝蒂斯", played:38, win:14, draw:15, loss:9, goalsFor:48, goalsAgainst:45, points:57 },
+      { rank:8, team:"比利亚雷亚尔", played:38, win:14, draw:11, loss:13, goalsFor:65, goalsAgainst:65, points:53 },
+      { rank:9, team:"瓦伦西亚", played:38, win:13, draw:10, loss:15, goalsFor:40, goalsAgainst:45, points:49 },
+      { rank:10, team:"阿拉维斯", played:38, win:12, draw:10, loss:16, goalsFor:36, goalsAgainst:46, points:46 },
+      { rank:11, team:"奥萨苏纳", played:38, win:12, draw:9, loss:17, goalsFor:45, goalsAgainst:56, points:45 },
+      { rank:12, team:"赫塔菲", played:38, win:10, draw:13, loss:15, goalsFor:42, goalsAgainst:54, points:43 },
+      { rank:13, team:"维戈塞尔塔", played:38, win:10, draw:11, loss:17, goalsFor:46, goalsAgainst:57, points:41 },
+      { rank:14, team:"塞维利亚", played:38, win:10, draw:11, loss:17, goalsFor:48, goalsAgainst:54, points:41 },
+      { rank:15, team:"马略卡", played:38, win:8, draw:16, loss:14, goalsFor:33, goalsAgainst:44, points:40 },
+      { rank:16, team:"拉斯帕尔马斯", played:38, win:10, draw:10, loss:18, goalsFor:33, goalsAgainst:47, points:40 },
+      { rank:17, team:"巴列卡诺", played:38, win:8, draw:14, loss:16, goalsFor:29, goalsAgainst:48, points:38 },
+      { rank:18, team:"加的斯", played:38, win:6, draw:15, loss:17, goalsFor:26, goalsAgainst:55, points:33 },
+      { rank:19, team:"阿尔梅里亚", played:38, win:3, draw:12, loss:23, goalsFor:43, goalsAgainst:75, points:21 },
+      { rank:20, team:"格拉纳达", played:38, win:4, draw:9, loss:25, goalsFor:38, goalsAgainst:79, points:21 }
+    ],
+    "2022-2023": [
+      { rank:1, team:"巴塞罗那", played:38, win:28, draw:4, loss:6, goalsFor:70, goalsAgainst:20, points:88 },
+      { rank:2, team:"皇家马德里", played:38, win:24, draw:6, loss:8, goalsFor:75, goalsAgainst:36, points:78 },
+      { rank:3, team:"马德里竞技", played:38, win:23, draw:8, loss:7, goalsFor:70, goalsAgainst:33, points:77 },
+      { rank:4, team:"皇家社会", played:38, win:21, draw:8, loss:9, goalsFor:51, goalsAgainst:35, points:71 },
+      { rank:5, team:"比利亚雷亚尔", played:38, win:19, draw:7, loss:12, goalsFor:59, goalsAgainst:40, points:64 },
+      { rank:6, team:"皇家贝蒂斯", played:38, win:17, draw:9, loss:12, goalsFor:46, goalsAgainst:41, points:60 },
+      { rank:7, team:"奥萨苏纳", played:38, win:15, draw:8, loss:15, goalsFor:37, goalsAgainst:42, points:53 },
+      { rank:8, team:"毕尔巴鄂竞技", played:38, win:14, draw:9, loss:15, goalsFor:47, goalsAgainst:43, points:51 },
+      { rank:9, team:"马略卡", played:38, win:14, draw:8, loss:16, goalsFor:37, goalsAgainst:43, points:50 },
+      { rank:10, team:"赫罗纳", played:38, win:13, draw:10, loss:15, goalsFor:58, goalsAgainst:55, points:49 },
+      { rank:11, team:"巴列卡诺", played:38, win:13, draw:10, loss:15, goalsFor:45, goalsAgainst:53, points:49 },
+      { rank:12, team:"塞维利亚", played:38, win:13, draw:10, loss:15, goalsFor:47, goalsAgainst:54, points:49 },
+      { rank:13, team:"维戈塞尔塔", played:38, win:11, draw:10, loss:17, goalsFor:43, goalsAgainst:53, points:43 },
+      { rank:14, team:"加的斯", played:38, win:10, draw:12, loss:16, goalsFor:30, goalsAgainst:53, points:42 },
+      { rank:15, team:"赫塔菲", played:38, win:10, draw:12, loss:16, goalsFor:34, goalsAgainst:45, points:42 },
+      { rank:16, team:"瓦伦西亚", played:38, win:11, draw:9, loss:18, goalsFor:42, goalsAgainst:45, points:42 },
+      { rank:17, team:"阿尔梅里亚", played:38, win:11, draw:8, loss:19, goalsFor:49, goalsAgainst:65, points:41 },
+      { rank:18, team:"巴拉多利德", played:38, win:11, draw:7, loss:20, goalsFor:33, goalsAgainst:63, points:40 },
+      { rank:19, team:"西班牙人", played:38, win:8, draw:13, loss:17, goalsFor:52, goalsAgainst:56, points:37 },
+      { rank:20, team:"埃尔切", played:38, win:5, draw:10, loss:23, goalsFor:30, goalsAgainst:67, points:25 }
+    ]
+  }
 };
 
 // ==================== 增强: 球员精细化数据 ====================
@@ -854,12 +1053,16 @@ const teamData = {
   }
 };
 
-// ==================== 裁判数据库 ====================
+// ==================== 裁判数据库（扩展版，与联赛关联）====================
 const refereeDB = {
-  "迈克尔·奥利弗": { yellow_avg: 3.8, red_avg: 0.21, pen_avg: 0.16, style: "严格", var_usage: 0.8 },
-  "安东尼·泰勒": { yellow_avg: 3.5, red_avg: 0.18, pen_avg: 0.14, style: "均衡", var_usage: 0.7 },
-  "马丁·阿特金森": { yellow_avg: 4.0, red_avg: 0.22, pen_avg: 0.15, style: "宽松", var_usage: 0.6 },
-  "马里奥·埃斯科瓦尔": { yellow_avg: 4.2, red_avg: 0.24, pen_avg: 0.18, style: "严格", var_usage: 0.7 }
+  "迈克尔·奥利弗": { yellow_avg: 3.8, red_avg: 0.21, pen_avg: 0.16, style: "严格", var_usage: 0.8, league: "英超" },
+  "安东尼·泰勒": { yellow_avg: 3.5, red_avg: 0.18, pen_avg: 0.14, style: "均衡", var_usage: 0.7, league: "英超" },
+  "马丁·阿特金森": { yellow_avg: 4.0, red_avg: 0.22, pen_avg: 0.15, style: "宽松", var_usage: 0.6, league: "英超" },
+  "马里奥·埃斯科瓦尔": { yellow_avg: 4.2, red_avg: 0.24, pen_avg: 0.18, style: "严格", var_usage: 0.7, league: "西甲" },
+  "希尔·曼萨诺": { yellow_avg: 4.5, red_avg: 0.25, pen_avg: 0.20, style: "严格", var_usage: 0.7, league: "西甲" },
+  "丹尼·梅凯利": { yellow_avg: 3.2, red_avg: 0.15, pen_avg: 0.12, style: "宽松", var_usage: 0.8, league: "德甲" },
+  "丹尼尔·奥尔萨托": { yellow_avg: 3.6, red_avg: 0.19, pen_avg: 0.15, style: "均衡", var_usage: 0.7, league: "意甲" },
+  "克莱芒·特平": { yellow_avg: 3.4, red_avg: 0.17, pen_avg: 0.13, style: "均衡", var_usage: 0.7, league: "法甲" }
 };
 
 // 工具函数
@@ -1217,13 +1420,24 @@ async function fetchH2H(homeName, awayName) {
       (m.homeTeam.id === awayId && m.awayTeam.id === homeId)
     ).slice(0,5);
     let html = '';
+    let totalGoals = 0, bothScoreCount = 0;
     h2hMatches.forEach(m => {
       const isHome = m.homeTeam.id === homeId;
       const score = `${m.score.fullTime.home} - ${m.score.fullTime.away}`;
       const date = new Date(m.utcDate).toLocaleDateString();
       html += `<div class="schedule-item">${date} ${m.homeTeam.name} ${score} ${m.awayTeam.name}</div>`;
+      totalGoals += m.score.fullTime.home + m.score.fullTime.away;
+      if (m.score.fullTime.home > 0 && m.score.fullTime.away > 0) bothScoreCount++;
     });
     document.getElementById('h2hDetail').innerHTML = html || '<div class="schedule-item">无历史交锋</div>';
+    // 显示交锋统计
+    let h2hStatsHtml = '';
+    if (h2hMatches.length > 0) {
+      let avgGoals = (totalGoals / h2hMatches.length).toFixed(1);
+      let bothScoreProb = ((bothScoreCount / h2hMatches.length) * 100).toFixed(0);
+      h2hStatsHtml = `📊 交锋场均${avgGoals}球，双方进球概率${bothScoreProb}%`;
+    }
+    document.getElementById('h2hStats').innerHTML = h2hStatsHtml;
   }
 }
 
@@ -1514,10 +1728,10 @@ function startSim() {
   let homeMorale = h2hAdvantage * importanceFactor * (0.98 + socialFactor*0.04) * homeTransferImpact;
   let awayMorale = importanceFactor * (1.02 - socialFactor*0.04) * awayTransferImpact;
   
-  // 裁判风格
-  const refereeNames = Object.keys(refereeDB);
-  let refName = refereeNames[Math.floor(Math.random() * refereeNames.length)];
-  let ref = refereeDB[refName];
+  // 裁判风格（根据联赛匹配）
+  const leagueReferees = Object.values(refereeDB).filter(r => r.league === league);
+  let ref = leagueReferees.length > 0 ? leagueReferees[Math.floor(Math.random() * leagueReferees.length)] : refereeDB["迈克尔·奥利弗"];
+  let refName = Object.keys(refereeDB).find(key => refereeDB[key] === ref) || "迈克尔·奥利弗";
   document.getElementById('refereeName').innerText = refName;
   document.getElementById('refYellow').innerText = ref.yellow_avg.toFixed(1);
   document.getElementById('refRed').innerText = ref.red_avg.toFixed(1);
@@ -2094,6 +2308,20 @@ async function startAI(){
     let homeTransfer = getTransferImpact(hn);
     let awayTransfer = getTransferImpact(an);
     document.getElementById('transferImpactInfo').innerHTML = `💼 转会影响: ${hn} x${homeTransfer.toFixed(2)} | ${an} x${awayTransfer.toFixed(2)}`;
+    
+    // 球队动态状态（基于近期战绩）
+    let homePoints = 0, awayPoints = 0;
+    document.querySelectorAll('#homeRecentDetails .schedule-item').forEach(item => {
+      if (item.innerText.includes('✅')) homePoints += 3;
+      else if (item.innerText.includes('🤝')) homePoints += 1;
+    });
+    document.querySelectorAll('#awayRecentDetails .schedule-item').forEach(item => {
+      if (item.innerText.includes('✅')) awayPoints += 3;
+      else if (item.innerText.includes('🤝')) awayPoints += 1;
+    });
+    let homeState = homePoints >= 7 ? '火热' : (homePoints >= 4 ? '稳定' : '低迷');
+    let awayState = awayPoints >= 7 ? '火热' : (awayPoints >= 4 ? '稳定' : '低迷');
+    document.getElementById('teamDynamicState').innerHTML = `📈 状态: ${hn} ${homeState} (${homePoints}分) | ${an} ${awayState} (${awayPoints}分)`;
     
     updateNewsTicker(hn, an);
     updateOddsHistory();
