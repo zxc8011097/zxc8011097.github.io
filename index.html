@@ -1722,163 +1722,235 @@ function getTransferImpact(teamName) {
   return rumor ? rumor.impact : 1.0;
 }
 
-// ==================== 增强版蒙特卡洛模拟 (修正版，产生更真实的比分分布) ====================
-function runMonteCarlo() {
+// ==================== 增强版蒙特卡洛模拟 (整合真实近期数据 + 随机扰动) ====================
+async function runMonteCarlo() {
   let hn = getHomeName(); let an = getAwayName();
   if (!hn || !an || hn == an) { showToast("请先选择球队"); return; }
-  let h = getTeam(hn); let a = getTeam(an);
-  let lg = leagueAttr[league] || leagueAttr["英超"];
   
-  // 1. 计算基础期望λ（确保λ值合理，避免过低）
-  let homeLambda, awayLambda;
-  if (document.getElementById('usePoissonReg').checked) {
-    homeLambda = computeLambdaWithFeatures(h, a, true);
-    awayLambda = computeLambdaWithFeatures(h, a, false);
-  } else {
-    homeLambda = (h.xG - (h.xgImpact||0)) * h.home;
-    awayLambda = (a.xG - (a.xgImpact||0)) * a.away;
-  }
-  homeLambda = applyBayesianUpdate(homeLambda, h, true, a);
-  awayLambda = applyBayesianUpdate(awayLambda, a, false, h);
-  homeLambda = applyAltitude(homeLambda, true);
-  awayLambda = applyAltitude(awayLambda, false);
-  
-  // 2. 应用模型参数
-  homeLambda *= modelParams.homeWeight;
-  awayLambda *= (2 - modelParams.homeWeight);
-  homeLambda *= (1 + (h.recentForm - 2) * 0.1 * modelParams.formWeight);
-  awayLambda *= (1 + (a.recentForm - 2) * 0.1 * modelParams.formWeight);
-  
-  // 3. 额外因子
-  if (checkDerby(hn, an)) { homeLambda *= 1.1; awayLambda *= 1.1; }
-  if (h.tactics && a.tactics) {
-    if (h.tactics === '控球' && a.tactics === '反击') { homeLambda *= 0.95; awayLambda *= 1.05; }
-    if (h.tactics === '反击' && a.tactics === '控球') { homeLambda *= 1.05; awayLambda *= 0.95; }
-  }
-  if (isInternationalBreak()) { homeLambda *= 0.97; awayLambda *= 0.97; }
-  homeLambda *= (h.starPower || 1.0);
-  awayLambda *= (a.starPower || 1.0);
-  
-  // 4. 联赛平均调整 (确保λ在合理范围)
-  let leagueAvgGoal = lg.avgGoal || 2.5;
-  let totalLambda = homeLambda + awayLambda;
-  if (totalLambda < 1.0) { // 如果期望太低，适当提高
-    homeLambda *= 1.5;
-    awayLambda *= 1.5;
-  }
-  // 限制λ最大值，避免比分过大
-  homeLambda = Math.min(3.5, homeLambda);
-  awayLambda = Math.min(3.0, awayLambda);
-  
-  let iters = parseInt(document.getElementById('mcIters').value);
-  document.getElementById('mcItersVal').innerText = iters;
-  
-  // 5. 使用负二项分布，根据球队风格调整size参数（控球型方差小，反击型方差大）
-  let homeSize = h.tactics === '控球' ? 2.0 : 1.2;
-  let awaySize = a.tactics === '控球' ? 2.0 : 1.2;
-  const timeWeights = [0.6, 0.9, 1.1, 1.3, 1.6]; // 微调时段权重
-  
-  let results = {};
-  let win = 0, draw = 0, lose = 0;
-  let bothScore = 0, totalGoalsGe3 = 0;
-  let halfTimeResults = {}; // 上半场比分统计
-  let goalMinutes = []; // 进球时间分布
-  
-  for (let i = 0; i < iters; i++) {
-    // 引入更大的随机扰动
-    let homeLambdaRand = homeLambda * (0.7 + Math.random() * 0.6);
-    let awayLambdaRand = awayLambda * (0.7 + Math.random() * 0.6);
+  showLoading(); // 加载提示
+  try {
+    let h = getTeam(hn); let a = getTeam(an);
+    let lg = leagueAttr[league] || leagueAttr["英超"];
     
-    let hg = 0, ag = 0;
-    let hgHalf = 0, agHalf = 0; // 上半场进球
-    // 分时段模拟（5个15分钟）
-    for (let seg = 0; seg < 5; seg++) {
-      let segHomeLambda = homeLambdaRand * timeWeights[seg] / 5;
-      let segAwayLambda = awayLambdaRand * timeWeights[seg] / 5;
-      
-      // 负二项抽样：成功概率 p = size / (size + lambda)
-      let pHome = homeSize / (homeSize + segHomeLambda);
-      let pAway = awaySize / (awaySize + segAwayLambda);
-      
-      // 使用几何分布的和模拟负二项
-      let homeGoalsSeg = 0;
-      while (Math.random() > pHome) homeGoalsSeg++;
-      let awayGoalsSeg = 0;
-      while (Math.random() > pAway) awayGoalsSeg++;
-      
-      hg += homeGoalsSeg;
-      ag += awayGoalsSeg;
-      if (seg < 3) { // 前45分钟（0-45）为上半场
-        hgHalf += homeGoalsSeg;
-        agHalf += awayGoalsSeg;
-      }
-      // 记录进球时间（粗略）
-      for (let g=0; g<homeGoalsSeg; g++) {
-        let minute = seg*15 + Math.floor(Math.random()*15) + 1;
-        goalMinutes.push({team:'home', minute});
-      }
-      for (let g=0; g<awayGoalsSeg; g++) {
-        let minute = seg*15 + Math.floor(Math.random()*15) + 1;
-        goalMinutes.push({team:'away', minute});
+    // ========== 获取真实近期数据 ==========
+    let homeRecentAvg = h.xG || 1.5; // 默认值
+    let awayRecentAvg = a.xG || 1.3;
+    
+    // 获取主队近5场平均进球
+    const homeId = getTeamId(hn);
+    if (homeId) {
+      const url = `https://api.football-data.org/v4/teams/${homeId}/matches?status=FINISHED&limit=5`;
+      const data = await fetchWithCache(url, `recent_${homeId}_mc`, 3600000);
+      if (data && data.matches) {
+        let goals = 0, count = 0;
+        data.matches.slice(0,5).forEach(m => {
+          const isHome = m.homeTeam.id === homeId;
+          goals += isHome ? m.score.fullTime.home : m.score.fullTime.away;
+          count++;
+        });
+        if (count > 0) homeRecentAvg = goals / count;
       }
     }
     
-    // 补时阶段额外机会（概率稍高）
-    if (Math.random() < 0.12) {
-      if (Math.random()<0.5) { hg++; if (hgHalf === 0 && agHalf === 0) hgHalf++; } // 补时进球计入下半场
-      else { ag++; if (hgHalf === 0 && agHalf === 0) agHalf++; }
+    // 获取客队近5场平均进球
+    const awayId = getTeamId(an);
+    if (awayId) {
+      const url = `https://api.football-data.org/v4/teams/${awayId}/matches?status=FINISHED&limit=5`;
+      const data = await fetchWithCache(url, `recent_${awayId}_mc`, 3600000);
+      if (data && data.matches) {
+        let goals = 0, count = 0;
+        data.matches.slice(0,5).forEach(m => {
+          const isAway = m.awayTeam.id === awayId;
+          goals += isAway ? m.score.fullTime.away : m.score.fullTime.home;
+          count++;
+        });
+        if (count > 0) awayRecentAvg = goals / count;
+      }
     }
     
-    hg = Math.min(hg, 8);
-    ag = Math.min(ag, 8);
-    hgHalf = Math.min(hgHalf, 8);
-    agHalf = Math.min(agHalf, 8);
+    // 混合原始 xG 和近期平均 (权重各 0.5)
+    let homeXgAdj = (h.xG * 0.5 + homeRecentAvg * 0.5) - (h.xgImpact || 0);
+    let awayXgAdj = (a.xG * 0.5 + awayRecentAvg * 0.5) - (a.xgImpact || 0);
     
-    let key = hg + "-" + ag;
-    results[key] = (results[key] || 0) + 1;
-    let halfKey = hgHalf + "-" + agHalf;
-    halfTimeResults[halfKey] = (halfTimeResults[halfKey] || 0) + 1;
+    // 1. 计算基础期望λ（使用调整后的 xG）
+    let homeLambda, awayLambda;
+    if (document.getElementById('usePoissonReg').checked) {
+      // 特征回归仍使用原始 elo，但后续会乘以调整因子
+      homeLambda = computeLambdaWithFeatures(h, a, true);
+      awayLambda = computeLambdaWithFeatures(h, a, false);
+      // 用近期数据缩放
+      homeLambda = homeLambda * (homeXgAdj / (h.xG || 1.5));
+      awayLambda = awayLambda * (awayXgAdj / (a.xG || 1.3));
+    } else {
+      homeLambda = homeXgAdj * h.home;
+      awayLambda = awayXgAdj * a.away;
+    }
     
-    if (hg > ag) win++; else if (hg < ag) lose++; else draw++;
-    if (hg > 0 && ag > 0) bothScore++;
-    if (hg + ag >= 3) totalGoalsGe3++;
+    homeLambda = applyBayesianUpdate(homeLambda, h, true, a);
+    awayLambda = applyBayesianUpdate(awayLambda, a, false, h);
+    homeLambda = applyAltitude(homeLambda, true);
+    awayLambda = applyAltitude(awayLambda, false);
+    
+    // 2. 应用模型参数
+    homeLambda *= modelParams.homeWeight;
+    awayLambda *= (2 - modelParams.homeWeight);
+    homeLambda *= (1 + (h.recentForm - 2) * 0.1 * modelParams.formWeight);
+    awayLambda *= (1 + (a.recentForm - 2) * 0.1 * modelParams.formWeight);
+    
+    // 3. 额外因子
+    if (checkDerby(hn, an)) { homeLambda *= 1.1; awayLambda *= 1.1; }
+    if (h.tactics && a.tactics) {
+      if (h.tactics === '控球' && a.tactics === '反击') { homeLambda *= 0.95; awayLambda *= 1.05; }
+      if (h.tactics === '反击' && a.tactics === '控球') { homeLambda *= 1.05; awayLambda *= 0.95; }
+    }
+    if (isInternationalBreak()) { homeLambda *= 0.97; awayLambda *= 0.97; }
+    homeLambda *= (h.starPower || 1.0);
+    awayLambda *= (a.starPower || 1.0);
+    
+    // ========== 真实数据随机因素 ==========
+    // 伤停影响（如果存在伤病信息）
+    if (h.injuries && h.injuries.length > 0) homeLambda *= 0.95;
+    if (a.injuries && a.injuries.length > 0) awayLambda *= 0.95;
+    
+    // 随机天气影响（模拟 xG 调整 -8% 到 +5%）
+    let weatherFactor = 1 + (Math.random() * 0.13 - 0.08); // 范围 0.92 ~ 1.05
+    homeLambda *= weatherFactor;
+    awayLambda *= weatherFactor;
+    
+    // 随机疲劳影响（0.95~1.05）
+    let fatigueFactorHome = 0.95 + Math.random() * 0.1;
+    let fatigueFactorAway = 0.95 + Math.random() * 0.1;
+    homeLambda *= fatigueFactorHome;
+    awayLambda *= fatigueFactorAway;
+    // =====================================
+    
+    // 4. 联赛平均调整 (确保λ在合理范围)
+    let leagueAvgGoal = lg.avgGoal || 2.5;
+    let totalLambda = homeLambda + awayLambda;
+    if (totalLambda < 1.0) { // 如果期望太低，适当提高
+      homeLambda *= 1.5;
+      awayLambda *= 1.5;
+    }
+    // 限制λ最大值，避免比分过大
+    homeLambda = Math.min(3.5, homeLambda);
+    awayLambda = Math.min(3.0, awayLambda);
+    
+    let iters = parseInt(document.getElementById('mcIters').value);
+    document.getElementById('mcItersVal').innerText = iters;
+    
+    // 5. 使用负二项分布，根据球队风格调整size参数（控球型方差小，反击型方差大）
+    let homeSize = h.tactics === '控球' ? 2.0 : 1.2;
+    let awaySize = a.tactics === '控球' ? 2.0 : 1.2;
+    const timeWeights = [0.6, 0.9, 1.1, 1.3, 1.6]; // 微调时段权重
+    
+    let results = {};
+    let win = 0, draw = 0, lose = 0;
+    let bothScore = 0, totalGoalsGe3 = 0;
+    let halfTimeResults = {}; // 上半场比分统计
+    let goalMinutes = []; // 进球时间分布
+    
+    for (let i = 0; i < iters; i++) {
+      // 引入更大的随机扰动
+      let homeLambdaRand = homeLambda * (0.7 + Math.random() * 0.6);
+      let awayLambdaRand = awayLambda * (0.7 + Math.random() * 0.6);
+      
+      let hg = 0, ag = 0;
+      let hgHalf = 0, agHalf = 0; // 上半场进球
+      // 分时段模拟（5个15分钟）
+      for (let seg = 0; seg < 5; seg++) {
+        let segHomeLambda = homeLambdaRand * timeWeights[seg] / 5;
+        let segAwayLambda = awayLambdaRand * timeWeights[seg] / 5;
+        
+        // 负二项抽样：成功概率 p = size / (size + lambda)
+        let pHome = homeSize / (homeSize + segHomeLambda);
+        let pAway = awaySize / (awaySize + segAwayLambda);
+        
+        // 使用几何分布的和模拟负二项
+        let homeGoalsSeg = 0;
+        while (Math.random() > pHome) homeGoalsSeg++;
+        let awayGoalsSeg = 0;
+        while (Math.random() > pAway) awayGoalsSeg++;
+        
+        hg += homeGoalsSeg;
+        ag += awayGoalsSeg;
+        if (seg < 3) { // 前45分钟（0-45）为上半场
+          hgHalf += homeGoalsSeg;
+          agHalf += awayGoalsSeg;
+        }
+        // 记录进球时间（粗略）
+        for (let g=0; g<homeGoalsSeg; g++) {
+          let minute = seg*15 + Math.floor(Math.random()*15) + 1;
+          goalMinutes.push({team:'home', minute});
+        }
+        for (let g=0; g<awayGoalsSeg; g++) {
+          let minute = seg*15 + Math.floor(Math.random()*15) + 1;
+          goalMinutes.push({team:'away', minute});
+        }
+      }
+      
+      // 补时阶段额外机会（概率稍高）
+      if (Math.random() < 0.12) {
+        if (Math.random()<0.5) { hg++; if (hgHalf === 0 && agHalf === 0) hgHalf++; } // 补时进球计入下半场
+        else { ag++; if (hgHalf === 0 && agHalf === 0) agHalf++; }
+      }
+      
+      hg = Math.min(hg, 8);
+      ag = Math.min(ag, 8);
+      hgHalf = Math.min(hgHalf, 8);
+      agHalf = Math.min(agHalf, 8);
+      
+      let key = hg + "-" + ag;
+      results[key] = (results[key] || 0) + 1;
+      let halfKey = hgHalf + "-" + agHalf;
+      halfTimeResults[halfKey] = (halfTimeResults[halfKey] || 0) + 1;
+      
+      if (hg > ag) win++; else if (hg < ag) lose++; else draw++;
+      if (hg > 0 && ag > 0) bothScore++;
+      if (hg + ag >= 3) totalGoalsGe3++;
+    }
+    
+    // 排序比分
+    let sorted = Object.entries(results).sort((a,b) => b[1] - a[1]).slice(0,5);
+    let html = '';
+    sorted.forEach(([sc, cnt]) => {
+      let prob = (cnt / iters * 100).toFixed(1);
+      html += `<div>${sc} <span style="color:#FFD700">${prob}%</span></div>`;
+    });
+    document.getElementById('mcScores').innerHTML = html;
+    
+    let winP = (win/iters*100).toFixed(1);
+    let drawP = (draw/iters*100).toFixed(1);
+    let loseP = (lose/iters*100).toFixed(1);
+    document.getElementById('mcWinDrawLose').innerHTML = `🏆 主胜 ${winP}% | 平 ${drawP}% | 客胜 ${loseP}%`;
+    
+    let bothP = (bothScore/iters*100).toFixed(1);
+    let ge3P = (totalGoalsGe3/iters*100).toFixed(1);
+    
+    // 最可能上半场比分
+    let sortedHalf = Object.entries(halfTimeResults).sort((a,b) => b[1] - a[1]);
+    let mostHalf = sortedHalf.length > 0 ? sortedHalf[0][0] : "0-0";
+    
+    document.getElementById('mcBoth').innerText = bothP + '%';
+    document.getElementById('mcOver').innerText = ge3P + '%';
+    document.getElementById('mcHalf').innerText = mostHalf;
+    
+    document.getElementById('mcExtra').innerHTML = `⚽ 双方均进球概率 ${bothP}% | 总进球≥3概率 ${ge3P}% | 上半场最可能 ${mostHalf}`;
+    
+    document.getElementById('monteCarloResult').style.display = 'block';
+    
+    // 保存结果供后续使用
+    lastMonteCarloResult = { winP, drawP, loseP, bothP, ge3P, mostHalf, topScores: sorted };
+    
+  } catch (e) {
+    console.error("蒙特卡洛模拟失败", e);
+    showToast("模拟失败，请稍后重试");
+  } finally {
+    hideLoading();
   }
-  
-  // 排序比分
-  let sorted = Object.entries(results).sort((a,b) => b[1] - a[1]).slice(0,5);
-  let html = '';
-  sorted.forEach(([sc, cnt]) => {
-    let prob = (cnt / iters * 100).toFixed(1);
-    html += `<div>${sc} <span style="color:#FFD700">${prob}%</span></div>`;
-  });
-  document.getElementById('mcScores').innerHTML = html;
-  
-  let winP = (win/iters*100).toFixed(1);
-  let drawP = (draw/iters*100).toFixed(1);
-  let loseP = (lose/iters*100).toFixed(1);
-  document.getElementById('mcWinDrawLose').innerHTML = `🏆 主胜 ${winP}% | 平 ${drawP}% | 客胜 ${loseP}%`;
-  
-  let bothP = (bothScore/iters*100).toFixed(1);
-  let ge3P = (totalGoalsGe3/iters*100).toFixed(1);
-  
-  // 最可能上半场比分
-  let sortedHalf = Object.entries(halfTimeResults).sort((a,b) => b[1] - a[1]);
-  let mostHalf = sortedHalf.length > 0 ? sortedHalf[0][0] : "0-0";
-  
-  document.getElementById('mcBoth').innerText = bothP + '%';
-  document.getElementById('mcOver').innerText = ge3P + '%';
-  document.getElementById('mcHalf').innerText = mostHalf;
-  
-  document.getElementById('mcExtra').innerHTML = `⚽ 双方均进球概率 ${bothP}% | 总进球≥3概率 ${ge3P}% | 上半场最可能 ${mostHalf}`;
-  
-  document.getElementById('monteCarloResult').style.display = 'block';
-  
-  // 保存结果供后续使用
-  lastMonteCarloResult = { winP, drawP, loseP, bothP, ge3P, mostHalf, topScores: sorted };
 }
 
-// ==================== 增强版实时比赛模拟 (整合所有新特性) ====================
-async function startSim() {   // 改为 async 函数
+// ==================== 增强版实时比赛模拟 (整合真实近期数据 + 随机扰动) ====================
+async function startSim() {
   let hn = getHomeName(); 
   let an = getAwayName();
   if (!hn || !an || hn == an) { 
@@ -1890,6 +1962,49 @@ async function startSim() {   // 改为 async 函数
   
   let h = getTeam(hn); 
   let a = getTeam(an);
+  
+  // ========== 获取真实近期数据调整期望进球 ==========
+  let homeXg = h.xG || 1.5;
+  let awayXg = a.xG || 1.3;
+  
+  // 获取主队近5场平均进球
+  const homeId = getTeamId(hn);
+  if (homeId) {
+    const data = await fetchWithCache(`https://api.football-data.org/v4/teams/${homeId}/matches?status=FINISHED&limit=5`, `recent_${homeId}_sim`, 3600000);
+    if (data && data.matches) {
+      let goals = 0, count = 0;
+      data.matches.slice(0,5).forEach(m => {
+        const isHome = m.homeTeam.id === homeId;
+        goals += isHome ? m.score.fullTime.home : m.score.fullTime.away;
+        count++;
+      });
+      if (count > 0) {
+        let avg = goals / count;
+        // 混合原始 xG 和近期平均 (权重各 0.5)
+        homeXg = (h.xG * 0.5 + avg * 0.5) - (h.xgImpact || 0);
+      }
+    }
+  }
+  
+  // 获取客队近5场平均进球
+  const awayId = getTeamId(an);
+  if (awayId) {
+    const data = await fetchWithCache(`https://api.football-data.org/v4/teams/${awayId}/matches?status=FINISHED&limit=5`, `recent_${awayId}_sim`, 3600000);
+    if (data && data.matches) {
+      let goals = 0, count = 0;
+      data.matches.slice(0,5).forEach(m => {
+        const isAway = m.awayTeam.id === awayId;
+        goals += isAway ? m.score.fullTime.away : m.score.fullTime.home;
+        count++;
+      });
+      if (count > 0) {
+        let avg = goals / count;
+        awayXg = (a.xG * 0.5 + avg * 0.5) - (a.xgImpact || 0);
+      }
+    }
+  }
+  // ==============================================
+  
   let min = 0, hg = 0, ag = 0;
   let hShot = 0, aShot = 0, hShotOn = 0, aShotOn = 0;
   let hCorner = 0, aCorner = 0, hFreekick = 0, aFreekick = 0; // 任意球
@@ -2000,8 +2115,10 @@ async function startSim() {   // 改为 async 函数
   let awayStar = a.players.find(p=>p.star)?.name || a.players[0]?.name || "未知";
   let homeStarPower = h.starPower || 1.0;
   let awayStarPower = a.starPower || 1.0;
-  let homeXg = h.xG || 1.5;
-  let awayXg = a.xG || 1.3;
+  
+  // 使用调整后的 xG
+  // let homeXg 已在前面定义，此处不再重复
+  // let awayXg 同理
   
   // 伤停位置影响
   let homeAttackFactor = 1.0, homeDefendFactor = 1.0, homePassFactor = 1.0, homeSetPiece = 1.0;
@@ -2176,7 +2293,7 @@ async function startSim() {   // 改为 async 函数
     hBall = basePoss * homeAggressive / (homeAggressive + awayAggressive) * 2;
     aBall = 100 - hBall;
     
-    // 事件概率，考虑天气、疲劳、士气、转会影响
+    // 事件概率，考虑天气、疲劳、士气、转影响，并使用调整后的 homeXg/awayXg
     let homeShotProb = 0.02 * (h.attack/80) * homeAggressive * (homeXg/1.5) * homeMorale * homeFatigue * homeAttackFactor * shotWeatherFactor;
     let awayShotProb = 0.02 * (a.attack/80) * awayAggressive * (awayXg/1.5) * awayMorale * awayFatigue * awayAttackFactor * shotWeatherFactor;
     let homeCornerProb = 0.01 * (h.attack/80) * homeAggressive;
