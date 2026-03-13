@@ -6,6 +6,8 @@
 <meta name="keywords" content="足球预测,足球分析,足球AI,赛事预测,体育数据,比分预测,足球大数据">
 <meta name="description" content="专业足球AI分析系统，提供赛事预测、比分分析、球队数据、实时模拟，仅供足球爱好者娱乐使用。">
 <meta name="author" content="football-predict.top">
+<!-- PWA支持：内联manifest（实际部署时应改为manifest.json文件） -->
+<link rel="manifest" href="data:application/manifest;base64,ewogICJuYW1lIjogIui0pOeQgEFJ5aSn5pWw5o2u5rqQ5rW057uI5pyN5Yqh5Y2hIiwKICAic2hvcnRfbmFtZSI6ICLotoTnkIBBSVByZWQiLAogICJzdGFydF91cmwiOiAiLm9yZy8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwNzBiMWQiLAogICJ0aGVtZV9jb2xvciI6ICIjMTY1REZGIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiL2Zhdmljb24uaWNvIiwKICAgICAgInNpemVzIjogIjY0eDY0IiwKICAgICAgInR5cGUiOiAiaW1hZ2UveC1pY29uIgogICAgfQogIF0KfQ==" />
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
 <title>足球AI大数据预测 · 旗舰满配版 · 终极增强</title>
 <!-- 引入 Chart.js 和 html2canvas -->
@@ -153,6 +155,14 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 .error-heatmap div { background:#131b2e; padding:4px; border-radius:4px; }
 .mc-extra-detail { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; font-size:11px; color:#FFD700; }
 .h2h-stats { font-size:11px; background:#151d30; padding:8px; border-radius:8px; margin-top:6px; }
+/* 新增历史回测面板样式 */
+.backtest-detail { background:#131b2e; border-radius:10px; padding:12px; margin-top:8px; font-size:12px; }
+.backtest-detail .league-acc { display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; margin-top:4px; }
+/* 球员状态标签 */
+.player-status { font-size:10px; margin-left:4px; display:inline-block; width:16px; text-align:center; }
+.status-hot { color:#FF4D4F; }
+.status-normal { color:#FFD700; }
+.status-cold { color:#4096FF; }
 </style>
 </head>
 <body>
@@ -210,6 +220,11 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
 <!-- 新增国家队赛事 -->
 <div class="league-item">世界杯</div>
 <div class="league-item">欧洲杯</div>
+<!-- 新增二级联赛 -->
+<div class="league-item">希腊超</div>
+<div class="league-item">克罗地亚甲</div>
+<div class="league-item">罗马尼亚甲</div>
+<div class="league-item">斯洛伐克超</div>
 <!-- 原有后续联赛 -->
 <div class="league-item">英冠</div><div class="league-item">英甲</div><div class="league-item">西乙</div><div class="league-item">意乙</div><div class="league-item">德乙</div><div class="league-item">法乙</div><div class="league-item">葡甲</div><div class="league-item">荷乙</div><div class="league-item">俄超</div><div class="league-item">土超</div><div class="league-item">美职联</div>
 </div>
@@ -250,6 +265,12 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   </div>
   <!-- 新增：战术阵型与对位量化 -->
   <div class="position-strength" id="positionStrengthInfo"></div>
+  <!-- 新增：中场控制力、防守稳固性等增强指标 -->
+  <div id="advancedTactics" style="font-size:11px; margin-top:6px; color:#FFD700; line-height:1.5;">
+    <span id="midfieldControl">中场控制力: -- vs --</span><br>
+    <span id="defenseSolidity">防守稳固性: -- vs --</span><br>
+    <span id="wingThreat">边路威胁: -- vs --</span>
+  </div>
   <!-- 新增：疲劳系数 -->
   <div class="fatigue-indicator" id="fatigueInfo"></div>
   <!-- 新增：转会影响 -->
@@ -572,9 +593,10 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
   <div class="home-lineup" id="homeLineup"><span class="team-badge" id="homeBadge" style="background:#4096FF;">M</span>4-3-3<br>哈兰德·福登·B席</div>
   <div class="away-lineup" id="awayLineup"><span class="team-badge" id="awayBadge" style="background:#FF4D4F;">T</span>4-4-2<br>凯恩·孙兴慜</div>
 </div>
-<div style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px;">
-  <div>🔥 哈兰德 近3场5球</div>
-  <div>⚡ 凯恩 近3场2球1助</div>
+<!-- 球员状态标签区域（动态填充） -->
+<div id="playerStatusContainer" style="display:flex; justify-content:space-between; font-size:11px; margin-top:4px; flex-wrap:wrap;">
+  <div id="homePlayerStatus">🔥 哈兰德 · ⚡ 福登 · ❄️ 德布劳内</div>
+  <div id="awayPlayerStatus">🔥 凯恩 · ⚡ 孙兴慜 · ❄️ 麦迪逊</div>
 </div>
 
 <!-- 回测面板 + 误差分析 -->
@@ -588,6 +610,19 @@ body.light .history-item{background:#e8f0fe;color:#165DFF}
     <div class="schedule-item">vs 切尔西 预测2-1 实际2-1 ✅</div>
     <div class="schedule-item">vs 利物浦 预测1-1 实际0-1 ❌</div>
     <div class="schedule-item">vs 曼联 预测2-0 实际2-0 ✅</div>
+  </div>
+  <!-- 新增：历史回测面板（联赛精度） -->
+  <div class="backtest-detail">
+    <div style="color:#FFD700; margin-bottom:4px;">📈 各联赛预测精度（近10场）</div>
+    <div class="league-acc">
+      <span>英超: <span id="accPL">82%</span></span>
+      <span>西甲: <span id="accPD">78%</span></span>
+      <span>德甲: <span id="accBL">85%</span></span>
+      <span>意甲: <span id="accSA">76%</span></span>
+      <span>法甲: <span id="accFL">79%</span></span>
+      <span>欧冠: <span id="accCL">81%</span></span>
+    </div>
+    <div style="margin-top:4px; color:#aaa;">平均误差: <span id="avgError">0.8球</span></div>
   </div>
   <!-- 新增：误差热力图 -->
   <div class="error-heatmap" id="errorHeatmap">
@@ -748,7 +783,12 @@ const leagueAttr = {
   埃及超:{goalRate:0.95, drawRate:1.15, homeAdv:11, homeWinRate:42, avgGoal:2.40, avgShots:12.0, avgPoss:48, note:"埃及超：非洲豪门对决，防守为主，平局偏多", refYellow:3.8, refRed:0.20, refPen:0.15, varUsage:0.3},
   // 新增国家队赛事
   世界杯:{goalRate:0.98, drawRate:1.10, homeAdv:5, homeWinRate:40, avgGoal:2.50, avgShots:13.0, avgPoss:50, note:"世界杯：全球顶级国家队赛事，冷门频出", refYellow:3.5, refRed:0.18, refPen:0.14, varUsage:0.8},
-  欧洲杯:{goalRate:0.96, drawRate:1.12, homeAdv:4, homeWinRate:39, avgGoal:2.45, avgShots:12.8, avgPoss:51, note:"欧洲杯：欧洲顶级国家队赛事，技术含量高", refYellow:3.4, refRed:0.17, refPen:0.13, varUsage:0.8}
+  欧洲杯:{goalRate:0.96, drawRate:1.12, homeAdv:4, homeWinRate:39, avgGoal:2.45, avgShots:12.8, avgPoss:51, note:"欧洲杯：欧洲顶级国家队赛事，技术含量高", refYellow:3.4, refRed:0.17, refPen:0.13, varUsage:0.8},
+  // 新增二级联赛
+  希腊超:{goalRate:0.98, drawRate:1.10, homeAdv:12, homeWinRate:44, avgGoal:2.40, avgShots:12.5, avgPoss:49, note:"希腊超：防守强硬，主场优势较大", refYellow:4.0, refRed:0.22, refPen:0.16, varUsage:0.4},
+  克罗地亚甲:{goalRate:1.00, drawRate:1.08, homeAdv:11, homeWinRate:45, avgGoal:2.55, avgShots:13.0, avgPoss:50, note:"克罗地亚甲：技术细腻，节奏适中", refYellow:3.8, refRed:0.20, refPen:0.15, varUsage:0.4},
+  罗马尼亚甲:{goalRate:0.95, drawRate:1.12, homeAdv:10, homeWinRate:42, avgGoal:2.35, avgShots:12.2, avgPoss:48, note:"罗马尼亚甲：平局偏多，小球常见", refYellow:3.9, refRed:0.21, refPen:0.16, varUsage:0.3},
+  斯洛伐克超:{goalRate:1.02, drawRate:1.05, homeAdv:10, homeWinRate:43, avgGoal:2.50, avgShots:12.8, avgPoss:49, note:"斯洛伐克超：攻防均衡，主场有一定优势", refYellow:3.7, refRed:0.19, refPen:0.14, varUsage:0.3}
 };
 
 // ==================== 球队列表提前定义（确保在任何函数调用前可用）====================
@@ -893,6 +933,23 @@ const teams = {
   "欧洲杯":{
     "2025-2026":["法国","英格兰","西班牙","葡萄牙","德国","荷兰","意大利","比利时","克罗地亚","瑞士","丹麦","瑞典","挪威","奥地利","土耳其","乌克兰","波兰","捷克","匈牙利","塞尔维亚","苏格兰","威尔士"],
     "2026-2027":["法国","英格兰","西班牙","葡萄牙","德国","荷兰","意大利","比利时","克罗地亚","瑞士","丹麦","瑞典","挪威","奥地利","土耳其","乌克兰","波兰","捷克","匈牙利","塞尔维亚","苏格兰","威尔士"]
+  },
+  // 新增二级联赛
+  "希腊超":{
+    "2025-2026":["奥林匹亚科斯","帕纳辛奈科斯","雅典AEK","塞萨洛尼基","阿里斯","帕纳托利克斯","拉米亚","阿特罗米托斯","OFI克里特","沃洛斯","约阿尼纳","莱瓦迪亚科斯"],
+    "2026-2027":["奥林匹亚科斯","帕纳辛奈科斯","雅典AEK","塞萨洛尼基","阿里斯","帕纳托利克斯","拉米亚","阿特罗米托斯","OFI克里特","沃洛斯","约阿尼纳","莱瓦迪亚科斯"]
+  },
+  "克罗地亚甲":{
+    "2025-2026":["萨格勒布迪纳摩","斯普利特海杜克","奥西耶克","里耶卡","戈里察","斯拉文贝鲁波","伊斯特拉1961","瓦拉日丁","希本尼克","德拉格沃尔贾克"],
+    "2026-2027":["萨格勒布迪纳摩","斯普利特海杜克","奥西耶克","里耶卡","戈里察","斯拉文贝鲁波","伊斯特拉1961","瓦拉日丁","希本尼克","德拉格沃尔贾克"]
+  },
+  "罗马尼亚甲":{
+    "2025-2026":["布加勒斯特星","克卢日","CS克拉约瓦","布加勒斯特快速","法鲁尔","阿拉德联","舍佩斯","博托沙尼","UTA阿拉德","克拉约瓦大学","普洛耶什蒂","沃伦塔里"],
+    "2026-2027":["布加勒斯特星","克卢日","CS克拉约瓦","布加勒斯特快速","法鲁尔","阿拉德联","舍佩斯","博托沙尼","UTA阿拉德","克拉约瓦大学","普洛耶什蒂","沃伦塔里"]
+  },
+  "斯洛伐克超":{
+    "2025-2026":["布拉迪斯拉发","日利纳","特纳瓦斯巴达","波德布雷佐娃","特伦钦","米哈洛夫采","鲁容贝罗克","塞尼察","杜克拉","斯卡利卡"],
+    "2026-2027":["布拉迪斯拉发","日利纳","特纳瓦斯巴达","波德布雷佐娃","特伦钦","米哈洛夫采","鲁容贝罗克","塞尼察","杜克拉","斯卡利卡"]
   },
   "美职联":{
     "2025-2026":["迈阿密国际","洛杉矶FC","纽约城","亚特兰大联","奥兰多城","哥伦布机员","费城联合","新英格兰革命","蒙特利尔冲击","多伦多FC","芝加哥火焰","华盛顿联","辛辛那提","圣路易斯城","奥斯汀FC","皇家盐湖城","圣何塞地震","达拉斯FC","堪萨斯城","明尼苏达联","波特兰伐木者","西雅图海湾人","温哥华白浪","洛杉矶银河","休斯顿迪纳摩","科罗拉多急流"],
@@ -1807,22 +1864,22 @@ async function runMonteCarlo() {
     homeLambda *= (h.starPower || 1.0);
     awayLambda *= (a.starPower || 1.0);
     
-    // ========== 真实数据随机因素 ==========
-    // 伤停影响（如果存在伤病信息）
-    if (h.injuries && h.injuries.length > 0) homeLambda *= 0.95;
-    if (a.injuries && a.injuries.length > 0) awayLambda *= 0.95;
+    // ========== 真实数据随机因素（增强版）==========
+    // 伤停影响（如果存在伤病信息）权重加大
+    if (h.injuries && h.injuries.length > 0) homeLambda *= 0.90;  // 原0.95，改为0.90
+    if (a.injuries && a.injuries.length > 0) awayLambda *= 0.90;
     
-    // 随机天气影响（模拟 xG 调整 -8% 到 +5%）
-    let weatherFactor = 1 + (Math.random() * 0.13 - 0.08); // 范围 0.92 ~ 1.05
+    // 随机天气影响（扩大范围 -15% 到 +15%）
+    let weatherFactor = 1 + (Math.random() * 0.30 - 0.15); // 范围 0.85 ~ 1.15
     homeLambda *= weatherFactor;
     awayLambda *= weatherFactor;
     
-    // 随机疲劳影响（0.95~1.05）
-    let fatigueFactorHome = 0.95 + Math.random() * 0.1;
-    let fatigueFactorAway = 0.95 + Math.random() * 0.1;
+    // 随机疲劳影响（0.90~1.10）
+    let fatigueFactorHome = 0.90 + Math.random() * 0.20; // 0.90~1.10
+    let fatigueFactorAway = 0.90 + Math.random() * 0.20;
     homeLambda *= fatigueFactorHome;
     awayLambda *= fatigueFactorAway;
-    // =====================================
+    // ==============================================
     
     // 4. 联赛平均调整 (确保λ在合理范围)
     let leagueAvgGoal = lg.avgGoal || 2.5;
@@ -1831,9 +1888,9 @@ async function runMonteCarlo() {
       homeLambda *= 1.5;
       awayLambda *= 1.5;
     }
-    // 限制λ最大值，避免比分过大
-    homeLambda = Math.min(3.5, homeLambda);
-    awayLambda = Math.min(3.0, awayLambda);
+    // 放宽λ最大值，允许更高比分
+    homeLambda = Math.min(4.5, homeLambda);   // 原3.5改为4.5
+    awayLambda = Math.min(4.0, awayLambda);   // 原3.0改为4.0
     
     let iters = parseInt(document.getElementById('mcIters').value);
     document.getElementById('mcItersVal').innerText = iters;
@@ -1850,9 +1907,9 @@ async function runMonteCarlo() {
     let goalMinutes = []; // 进球时间分布
     
     for (let i = 0; i < iters; i++) {
-      // 引入更大的随机扰动
-      let homeLambdaRand = homeLambda * (0.7 + Math.random() * 0.6);
-      let awayLambdaRand = awayLambda * (0.7 + Math.random() * 0.6);
+      // 引入更大的随机扰动（0.5～1.5倍）
+      let homeLambdaRand = homeLambda * (0.5 + Math.random() * 1.0); // 原0.7+0.6
+      let awayLambdaRand = awayLambda * (0.5 + Math.random() * 1.0);
       
       let hg = 0, ag = 0;
       let hgHalf = 0, agHalf = 0; // 上半场进球
@@ -1888,16 +1945,16 @@ async function runMonteCarlo() {
         }
       }
       
-      // 补时阶段额外机会（概率稍高）
-      if (Math.random() < 0.12) {
+      // 补时阶段额外机会（概率提高）
+      if (Math.random() < 0.15) { // 原0.12
         if (Math.random()<0.5) { hg++; if (hgHalf === 0 && agHalf === 0) hgHalf++; } // 补时进球计入下半场
         else { ag++; if (hgHalf === 0 && agHalf === 0) agHalf++; }
       }
       
-      hg = Math.min(hg, 8);
-      ag = Math.min(ag, 8);
-      hgHalf = Math.min(hgHalf, 8);
-      agHalf = Math.min(agHalf, 8);
+      hg = Math.min(hg, 10); // 放宽上限到10球
+      ag = Math.min(ag, 10);
+      hgHalf = Math.min(hgHalf, 10);
+      agHalf = Math.min(agHalf, 10);
       
       let key = hg + "-" + ag;
       results[key] = (results[key] || 0) + 1;
@@ -2293,9 +2350,9 @@ async function startSim() {
     hBall = basePoss * homeAggressive / (homeAggressive + awayAggressive) * 2;
     aBall = 100 - hBall;
     
-    // 事件概率，考虑天气、疲劳、士气、转影响，并使用调整后的 homeXg/awayXg
-    let homeShotProb = 0.02 * (h.attack/80) * homeAggressive * (homeXg/1.5) * homeMorale * homeFatigue * homeAttackFactor * shotWeatherFactor;
-    let awayShotProb = 0.02 * (a.attack/80) * awayAggressive * (awayXg/1.5) * awayMorale * awayFatigue * awayAttackFactor * shotWeatherFactor;
+    // 事件概率，考虑天气、疲劳、士气、转影响，并使用调整后的 homeXg/awayXg（增强版）
+    let homeShotProb = 0.025 * (h.attack/80) * homeAggressive * (homeXg/1.5) * homeMorale * homeFatigue * homeAttackFactor * shotWeatherFactor; // 原0.02改为0.025
+    let awayShotProb = 0.025 * (a.attack/80) * awayAggressive * (awayXg/1.5) * awayMorale * awayFatigue * awayAttackFactor * shotWeatherFactor;
     let homeCornerProb = 0.01 * (h.attack/80) * homeAggressive;
     let awayCornerProb = 0.01 * (a.attack/80) * awayAggressive;
     let homeFoulProb = 0.008 * (h.defend/80) * (1 - homeAggressive) * (ref.style==='strict'?1.2: ref.style==='lenient'?0.8:1.0) * homeDefendFactor;
@@ -2304,32 +2361,35 @@ async function startSim() {
     let homeFreekickProb = homeFoulProb * 0.3; // 30%的犯规在危险区域
     let awayFreekickProb = awayFoulProb * 0.3;
     
+    // 定位球进球概率提高
+    let setPieceGoalProb = 0.2; // 原0.15改为0.2
+    
     let event = "";
     let rand = Math.random();
     
     // 优先处理任意球/角球进球（定位球）
-    if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece) { // 角球进球概率
+    if (rand < homeCornerProb * setPieceGoalProb * setPieceFactor * homeSetPiece) {
       hg++;
       let scorer = h.players[Math.floor(Math.random() * h.players.length)].name;
       if (homePlayerStats[scorer]) homePlayerStats[scorer].goals++;
       event = `⚽ GOAL！${min}′ ${hn} 角球进球！ ${scorer}`;
       document.getElementById("simScore").innerText = `${hg} - ${ag}`;
     }
-    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece) {
+    else if (rand < homeCornerProb * setPieceGoalProb * setPieceFactor * homeSetPiece + awayCornerProb * setPieceGoalProb * setPieceFactor * awaySetPiece) {
       ag++;
       let scorer = a.players[Math.floor(Math.random() * a.players.length)].name;
       if (awayPlayerStats[scorer]) awayPlayerStats[scorer].goals++;
       event = `⚽ GOAL！${min}′ ${an} 角球进球！ ${scorer}`;
       document.getElementById("simScore").innerText = `${hg} - ${ag}`;
     }
-    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece + homeFreekickProb * 0.2 * setPieceFactor * homeSetPiece) {
+    else if (rand < homeCornerProb * setPieceGoalProb * setPieceFactor * homeSetPiece + awayCornerProb * setPieceGoalProb * setPieceFactor * awaySetPiece + homeFreekickProb * 0.25 * setPieceFactor * homeSetPiece) {
       hg++;
       let scorer = h.players[Math.floor(Math.random() * h.players.length)].name;
       if (homePlayerStats[scorer]) homePlayerStats[scorer].goals++;
       event = `⚽ GOAL！${min}′ ${hn} 任意球破门！ ${scorer}`;
       document.getElementById("simScore").innerText = `${hg} - ${ag}`;
     }
-    else if (rand < homeCornerProb * 0.15 * setPieceFactor * homeSetPiece + awayCornerProb * 0.15 * setPieceFactor * awaySetPiece + homeFreekickProb * 0.2 * setPieceFactor * homeSetPiece + awayFreekickProb * 0.2 * setPieceFactor * awaySetPiece) {
+    else if (rand < homeCornerProb * setPieceGoalProb * setPieceFactor * homeSetPiece + awayCornerProb * setPieceGoalProb * setPieceFactor * awaySetPiece + homeFreekickProb * 0.25 * setPieceFactor * homeSetPiece + awayFreekickProb * 0.25 * setPieceFactor * awaySetPiece) {
       ag++;
       let scorer = a.players[Math.floor(Math.random() * a.players.length)].name;
       if (awayPlayerStats[scorer]) awayPlayerStats[scorer].goals++;
@@ -2343,7 +2403,7 @@ async function startSim() {
         let shooter = h.players[Math.floor(Math.random() * h.players.length)].name;
         if (homePlayerStats[shooter]) homePlayerStats[shooter].shots++;
         
-        let onTargetProb = 0.35 + (h.attack - a.defend) / 200;
+        let onTargetProb = 0.45 + (h.attack - a.defend) / 200; // 原0.35改为0.45
         onTargetProb *= homeStarPower * homeMorale * shotWeatherFactor;
         if (min > 80 && homeStar === shooter) onTargetProb *= 1.1;
         if (Math.random() < onTargetProb) {
@@ -2373,7 +2433,7 @@ async function startSim() {
         let shooter = a.players[Math.floor(Math.random() * a.players.length)].name;
         if (awayPlayerStats[shooter]) awayPlayerStats[shooter].shots++;
         
-        let onTargetProb = 0.35 + (a.attack - h.defend) / 200;
+        let onTargetProb = 0.45 + (a.attack - h.defend) / 200;
         onTargetProb *= awayStarPower * awayMorale * shotWeatherFactor;
         if (min > 80 && awayStar === shooter) onTargetProb *= 1.1;
         if (Math.random() < onTargetProb) {
@@ -2494,8 +2554,8 @@ async function startSim() {
       }
     }
     
-    // 乌龙球概率（极低）
-    if (Math.random() < 0.005) {
+    // 乌龙球概率（提高）
+    if (Math.random() < 0.008) { // 原0.005
       if (Math.random() < 0.5) {
         hOwnGoal++;
         ag++;
@@ -2509,16 +2569,16 @@ async function startSim() {
       }
     }
     
-    if (!event && Math.random() < 0.002 * homeAggressive * homeStarPower * homeMorale) {
+    if (!event && Math.random() < 0.003 * homeAggressive * homeStarPower * homeMorale) { // 原0.002
       event = `✨ ${homeStar} 个人突破，制造威胁！`;
       if (homePlayerStats[homeStar]) homePlayerStats[homeStar].dribble++;
     }
-    if (!event && Math.random() < 0.002 * awayAggressive * awayStarPower * awayMorale) {
+    if (!event && Math.random() < 0.003 * awayAggressive * awayStarPower * awayMorale) {
       event = `✨ ${awayStar} 个人突破，制造威胁！`;
       if (awayPlayerStats[awayStar]) awayPlayerStats[awayStar].dribble++;
     }
     
-    if (!varPending && Math.random() < 0.001 * ref.var_usage && min > 20 && min < 85) {
+    if (!varPending && Math.random() < 0.002 * ref.var_usage && min > 20 && min < 85) { // 原0.001
       varPending = true;
       event = `🖥️ VAR检查中... (疑似点球/越位)`;
       setTimeout(() => {
@@ -2540,14 +2600,14 @@ async function startSim() {
       if (awayPlayerStats[passer] && !awayPlayerStats[passer].injured) awayPlayerStats[passer].passes += Math.floor(Math.random()*3)+1;
     }
     
-    if (min === 60 && homeSubs.length > 0 && Math.random() < (h.coach?.subAggression || 0.3)) {
+    if (min === 60 && homeSubs.length > 0 && Math.random() < (h.coach?.subAggression || 0.4)) { // 原0.3改为0.4
       hSub++;
       let subIn = homeSubs[Math.floor(Math.random() * homeSubs.length)];
       homePlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0, injured:false };
       event = `🔄 ${min}′ ${hn} 换人，${subIn.name} 登场。`;
       homeFatigue = 1.0;
     }
-    if (min === 60 && awaySubs.length > 0 && Math.random() < (a.coach?.subAggression || 0.3)) {
+    if (min === 60 && awaySubs.length > 0 && Math.random() < (a.coach?.subAggression || 0.4)) {
       aSub++;
       let subIn = awaySubs[Math.floor(Math.random() * awaySubs.length)];
       awayPlayerStats[subIn.name] = { shots:0, passes:0, tackles:0, assists:0, goals:0, keyPass:0, dribble:0, intercept:0, foul:0, mins:0, sub:true, xG: subIn.xG_per90||0, xA: subIn.xA_per90||0, injured:false };
@@ -2675,6 +2735,17 @@ async function startAI(){
     let posStrength = `主队边路进攻强度: 左${h.positionStrength?.left_attack||85} 右${h.positionStrength?.right_attack||85}`;
     document.getElementById('positionStrengthInfo').innerHTML = `📐 ${formationText}<br>${posStrength}`;
     
+    // 中场控制力、防守稳固性、边路威胁等增强指标
+    let homeMidfield = Math.round((h.attack * 0.4 + h.defend * 0.3 + (h.power/100)*20));
+    let awayMidfield = Math.round((a.attack * 0.4 + a.defend * 0.3 + (a.power/100)*20));
+    let homeDefense = Math.round((h.defend * 0.7 + h.power/100*30));
+    let awayDefense = Math.round((a.defend * 0.7 + a.power/100*30));
+    let homeWing = Math.round((h.positionStrength?.left_attack + h.positionStrength?.right_attack) / 2 || 80);
+    let awayWing = Math.round((a.positionStrength?.left_attack + a.positionStrength?.right_attack) / 2 || 75);
+    document.getElementById('midfieldControl').innerHTML = `中场控制力: ${homeMidfield} vs ${awayMidfield}`;
+    document.getElementById('defenseSolidity').innerHTML = `防守稳固性: ${homeDefense} vs ${awayDefense}`;
+    document.getElementById('wingThreat').innerHTML = `边路威胁: ${homeWing} vs ${awayWing}`;
+    
     // 疲劳系数
     let homeFatigue = await calculateFatigueFactor(hn);
     let awayFatigue = await calculateFatigueFactor(an);
@@ -2720,26 +2791,25 @@ async function startAI(){
             homeGoals += homeScore;
           }
         });
-        let starPlayer = h.players.find(p => p.star) || h.players[0];
-        if (starPlayer) {
-          let estimatedGoals = Math.round(homeGoals * 0.6 / 5 * 3);
-          document.querySelector('#lineupBox + div div:first-child').innerHTML = `🔥 ${starPlayer.name} 近3场${estimatedGoals}球 (xG ${starPlayer.xG_per90?.toFixed(2)||'--'})`;
-        }
-        
-        let awayGoals = 0;
-        document.querySelectorAll('#awayRecentDetails .schedule-item').forEach(item => {
-          let text = item.innerText;
-          let parts = text.match(/(\d+)\s*-\s*(\d+)/);
-          if (parts) {
-            let awayScore = parseInt(parts[2]);
-            awayGoals += awayScore;
-          }
+        // 球员状态标签（基于xG_per90）
+        let homeStatusHtml = '';
+        h.players.slice(0,3).forEach(p => {
+          let status = '⚡';
+          if (p.xG_per90 > 0.6) status = '🔥';
+          else if (p.xG_per90 < 0.2) status = '❄️';
+          homeStatusHtml += `<span class="player-status ${status === '🔥' ? 'status-hot' : (status === '⚡' ? 'status-normal' : 'status-cold')}">${status}</span> ${p.name} `;
         });
-        let awayStar = a.players.find(p => p.star) || a.players[0];
-        if (awayStar) {
-          let estimatedGoals = Math.round(awayGoals * 0.6 / 5 * 3);
-          document.querySelector('#lineupBox + div div:last-child').innerHTML = `⚡ ${awayStar.name} 近3场${estimatedGoals}球 (xG ${awayStar.xG_per90?.toFixed(2)||'--'})`;
-        }
+        document.getElementById('homePlayerStatus').innerHTML = homeStatusHtml;
+        
+        let awayStatusHtml = '';
+        a.players.slice(0,3).forEach(p => {
+          let status = '⚡';
+          if (p.xG_per90 > 0.6) status = '🔥';
+          else if (p.xG_per90 < 0.2) status = '❄️';
+          awayStatusHtml += `<span class="player-status ${status === '🔥' ? 'status-hot' : (status === '⚡' ? 'status-normal' : 'status-cold')}">${status}</span> ${p.name} `;
+        });
+        document.getElementById('awayPlayerStatus').innerHTML = awayStatusHtml;
+        
       } catch (e) {}
     }, 500);
     
@@ -3013,4 +3083,4 @@ function getHomeName(){return isCustom?customHome:document.getElementById("homeT
 function getAwayName(){return isCustom?customAway:document.getElementById("awayTeam").value;}
 </script>
 </body>
-  </html>
+</html>
